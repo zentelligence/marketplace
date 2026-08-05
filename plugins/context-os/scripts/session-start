@@ -1,0 +1,55 @@
+#!/usr/bin/bash
+# Global-instructions bootstrap, invoked by bare command name (`session-start`)
+# from the `!` directive at the top of gated SKILL.md files, and re-invoked
+# defensively before any bash block that needs a resolved plugin variable.
+#
+# Each Bash tool call is a fresh non-interactive shell: exports made here do
+# not survive into the next invocation, and .bashrc appends never execute.
+# The tested workaround is a file under $TMPDIR, which does survive across
+# invocations within a session. This script writes `export` lines to that
+# file; callers must `source` it to bring the variables into their own shell.
+set -uo pipefail
+
+TMPDIR="${TMPDIR:-/tmp}"
+ENV_FILE="$TMPDIR/plugin-data.env"
+
+if [ -f "$ENV_FILE" ]; then
+    exit 0
+fi
+
+# Resolve this plugin's own root. In Cowork, the plugin's real files live
+# under a randomly-named subdirectory of $HOME/mnt/.remote-plugins/ (this
+# script's own BASH_SOURCE path is unreliable there), so prefer scanning for
+# our manifest by name. Outside Cowork (plain Claude Code CLI), there is no
+# such mount and this script really is running from the repo's own bin/, so
+# BASH_SOURCE is the correct and simpler fallback.
+resolve_plugin_root() {
+    local remote_plugins="$HOME/mnt/.remote-plugins"
+    if [ -d "$remote_plugins" ]; then
+        local d
+        for d in "$remote_plugins"/*/; do
+            [ -f "${d}.claude-plugin/plugin.json" ] || continue
+            if grep -q '"name"[[:space:]]*:[[:space:]]*"context-os"' "${d}.claude-plugin/plugin.json" 2>/dev/null; then
+                printf '%s' "${d%/}"
+                return
+            fi
+        done
+    fi
+    cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd
+}
+
+PLUGIN_ROOT="$(resolve_plugin_root)"
+
+{
+    echo "export CLAUDE_PLUGIN_ALLOW_SKILLS=1"
+    echo "export CONTEXT_OS_PLUGIN_ROOT=$PLUGIN_ROOT"
+} >> "$ENV_FILE"
+
+echo "SESSION-START: session-start script executed at $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$TMPDIR/run.log"
+
+# Foreach plugin in $HOME/mnt/.remote-plugins, print its name and path
+for p in "$HOME"/mnt/.remote-plugins/*/; do
+    [ -d "$p" ] || continue
+    name=$(python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('name','unknown'))" < "${p}.claude-plugin/plugin.json" 2>/dev/null)
+    echo "$name => $p"
+done

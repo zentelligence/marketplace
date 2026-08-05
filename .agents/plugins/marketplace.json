@@ -1,0 +1,29 @@
+{
+    "name": "zentelligence-plugins",
+    "description": "Codex-facing catalogue of Zentelligence agentic AI plugins. Companion to .claude-plugin/marketplace.json; no official Codex marketplace schema exists yet, so this mirrors that catalogue's shape for forward compatibility. Plugin `source` paths resolve relative to the repository root.",
+    "owner": {
+        "name": "Zentelligence",
+        "email": "support@zentelligence.com.au",
+        "url": "https://zentelligence.au"
+    },
+    "plugins": [
+        {
+            "name": "context-os",
+            "source": "plugins/context-os",
+            "displayName": "ContextOS",
+            "description": "A structured personal knowledge vault. Human-accessible via Obsidian; AI-operated via plugin.",
+            "version": "1.14.0",
+            "author": {
+                "name": "Zentelligence",
+                "email": "support@zentelligence.com.au"
+            },
+            "homepage": "https://zentelligence.au",
+            "keywords": [
+                "knowledge-management",
+                "second-brain",
+                "obsidian",
+                "memory"
+            ]
+        }
+    ]
+}

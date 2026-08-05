@@ -1,0 +1,22 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": []
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": []
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": []
+      }
+    ]
+  }
+}

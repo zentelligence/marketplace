@@ -1,0 +1,172 @@
+#!/usr/bin/python3
+"""
+session-start-plugins: SessionStart hook. Maps installed companion plugins.
+
+Scans the Cowork remote-plugins mount for sibling plugins, builds a
+name-to-path map, exports a boolean presence env var for known companions
+(currently `obsidian-skills`), and surfaces the map as session context.
+Replaces the manual "run ls and hold this in working memory" instruction
+that Claude was not reliably following.
+
+Also unconditionally exports `CLAUDE_PLUGIN_ALLOW_SKILLS=1`, mirroring
+`bin/session-start`, since Cowork otherwise blocks skill and tool use.
+
+Invoked by hooks/hooks.json via bare command name, not an absolute path:
+Cowork adds this plugin's bin/ to the Bash tool's PATH while the plugin is
+enabled, since CLAUDE_PLUGIN_ROOT is not populated in Cowork's hook
+execution environment (unlike the Claude Code CLI). Deliberately
+self-contained: it never needs its own file location, only $HOME and
+$CLAUDE_ENV_FILE, both external to the plugin bundle.
+
+Environment:
+    CLAUDE_ENV_FILE   If set, receives `export` lines sourced before every
+                       later Bash tool call in the session.
+
+Never raises: any failure degrades to a best-effort additionalContext note
+so a broken or absent mount cannot block session start.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import sys
+from pathlib import Path
+
+REMOTE_PLUGINS_DIR = Path.home() / "mnt" / ".remote-plugins"
+
+# Companion plugins we flag with a boolean env var when present.
+# Maps plugin name (as declared in its own plugin.json) to env var name.
+COMPANION_ENV_VARS: dict[str, str] = {
+    "obsidian-skills": "USE_OBSIDIAN_SKILLS",
+}
+
+# Env vars exported unconditionally, regardless of which companion plugins
+# are present. Mirrors the exports in bin/session-start.
+ALWAYS_EXPORT_ENV_VARS: dict[str, str] = {
+    "CLAUDE_PLUGIN_ALLOW_SKILLS": "1",
+}
+
+
+def scan_remote_plugins(remote_plugins_dir: Path) -> tuple[dict[str, str], list[str]]:
+    """Build a name-to-path map from immediate subdirectories of remote_plugins_dir.
+
+    Returns (map, warnings). Never raises; unreadable or malformed entries are
+    skipped and noted as warnings rather than aborting the scan.
+    """
+    plugins: dict[str, str] = {}
+    warnings: list[str] = []
+
+    if not remote_plugins_dir.is_dir():
+        return plugins, warnings
+
+    try:
+        entries = sorted(remote_plugins_dir.iterdir())
+    except OSError as exc:
+        warnings.append(f"Could not list {remote_plugins_dir}: {exc}")
+        return plugins, warnings
+
+    for entry in entries:
+        if not entry.is_dir():
+            continue
+        manifest = entry / ".claude-plugin" / "plugin.json"
+        if not manifest.is_file():
+            continue
+        try:
+            data = json.loads(manifest.read_text(encoding="utf-8"))
+            name = data["name"]
+        except (OSError, ValueError, KeyError) as exc:
+            warnings.append(f"Skipped {manifest}: {exc}")
+            continue
+        plugins[name] = str(entry.resolve())
+
+    return plugins, warnings
+
+
+def export_companion_env_vars(plugins: dict[str, str]) -> list[str]:
+    """Append export lines to $CLAUDE_ENV_FILE for the always-on vars and any
+    known companion plugins present.
+
+    Returns the list of env var names actually exported.
+    """
+    env_file = os.environ.get("CLAUDE_ENV_FILE")
+    if not env_file:
+        return []
+
+    exported: list[str] = []
+    lines: list[str] = []
+    for var_name, value in ALWAYS_EXPORT_ENV_VARS.items():
+        lines.append(f'export {var_name}={value}\n')
+        exported.append(var_name)
+
+    for plugin_name, var_name in COMPANION_ENV_VARS.items():
+        if plugin_name not in plugins:
+            continue
+        lines.append(f'export {var_name}=true\n')
+        exported.append(var_name)
+
+    if lines:
+        try:
+            with open(env_file, "a", encoding="utf-8") as fh:
+                fh.writelines(lines)
+        except OSError:
+            return []
+
+    return exported
+
+
+def build_context(
+    remote_plugins_dir: Path,
+    plugins: dict[str, str],
+    warnings: list[str],
+    exported: list[str],
+) -> str:
+    lines = ["## Remote plugins"]
+
+    if not remote_plugins_dir.is_dir():
+        lines.append(f"No remote-plugins mount found at `{remote_plugins_dir}`.")
+        return "\n".join(lines)
+
+    if not plugins:
+        lines.append(f"No plugins found under `{remote_plugins_dir}`.")
+    else:
+        lines.append("Detected companion plugins (name to path):")
+        lines.append("")
+        for name in sorted(plugins):
+            lines.append(f"- `{name}` -> `{plugins[name]}`")
+
+    if exported:
+        lines.append("")
+        lines.append(
+            "Exported for this session's Bash calls: "
+            + ", ".join(f"`{var}`" for var in exported)
+        )
+
+    if warnings:
+        lines.append("")
+        lines.append("Warnings:")
+        for warning in warnings:
+            lines.append(f"- {warning}")
+
+    return "\n".join(lines)
+
+
+def main() -> None:
+    try:
+        plugins, warnings = scan_remote_plugins(REMOTE_PLUGINS_DIR)
+        exported = export_companion_env_vars(plugins)
+        context = build_context(REMOTE_PLUGINS_DIR, plugins, warnings, exported)
+    except Exception as exc:  # noqa: BLE001 - a hook must never block session start
+        context = f"## Remote plugins\nSession-start plugin scan failed: {exc}"
+
+    print(json.dumps({
+        "hookSpecificOutput": {
+            "hookEventName": "SessionStart",
+            "additionalContext": context,
+        }
+    }))
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,29 @@
+{
+    "name": "zentelligence-plugins",
+    "owner": {
+        "name": "Zentelligence",
+        "email": "support@zentelligence.com.au",
+        "url": "https://zentelligence.au"
+    },
+    "description": "Public distribution point for Zentelligence agentic AI plugins.",
+    "plugins": [
+        {
+            "name": "context-os",
+            "source": "./plugins/context-os",
+            "displayName": "ContextOS",
+            "description": "A structured personal knowledge vault. Human-accessible via Obsidian; AI-operated via plugin.",
+            "version": "1.14.0",
+            "author": {
+                "name": "Zentelligence",
+                "email": "support@zentelligence.com.au"
+            },
+            "homepage": "https://zentelligence.au",
+            "keywords": [
+                "knowledge-management",
+                "second-brain",
+                "obsidian",
+                "memory"
+            ]
+        }
+    ]
+}
