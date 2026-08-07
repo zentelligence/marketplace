@@ -1,0 +1,57 @@
+# Live table views over memory/questions/*.md, built from each file's frontmatter. Requires
+# Obsidian's Bases core plugin; degrades harmlessly if unopened, memory/questions/index.md is
+# the plain-Markdown fallback. Edit via the contextos MCP base_apply tool where available, not
+# by hand, to keep filters, views, and property display names in sync.
+filters:
+  file.folder == "memory/questions"
+properties:
+  file.name:
+    displayName: Question
+  note.status:
+    displayName: Status
+  note.raised:
+    displayName: Raised
+  note.entity:
+    displayName: Entity
+  note.blocks:
+    displayName: Blocks
+  note.resolution_path:
+    displayName: Resolution path
+  note.resolved:
+    displayName: Resolved
+  note.decision:
+    displayName: Decision
+views:
+  - type: table
+    name: All questions
+    order:
+      - file.name
+      - note.status
+      - note.raised
+      - note.blocks
+    sort:
+      - property: note.raised
+        direction: DESC
+  - type: table
+    name: Open
+    filters:
+      note.status == "open"
+    order:
+      - file.name
+      - note.raised
+      - note.blocks
+      - note.resolution_path
+    sort:
+      - property: note.raised
+        direction: DESC
+  - type: table
+    name: Resolved
+    filters:
+      note.status == "resolved"
+    order:
+      - file.name
+      - note.resolved
+      - note.decision
+    sort:
+      - property: note.resolved
+        direction: DESC

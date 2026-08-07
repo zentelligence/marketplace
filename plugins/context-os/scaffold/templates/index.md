@@ -19,3 +19,5 @@ Any skill or script that generates one of the file types below must check for a 
 | [registry-prompt.md](registry-prompt.md) | Saved prompt, for `registry/prompts/<category>/`. |
 | [registry-role.md](registry-role.md) | Cognitive-posture role definition, for `registry/roles/`. |
 | [registry-skill.md](registry-skill.md) | Custom skill file, for `registry/skills/`. |
+| [registry-decision.md](registry-decision.md) | Vault decision record, for `memory/decisions/`. |
+| [registry-question.md](registry-question.md) | Open question record, for `memory/questions/`. |

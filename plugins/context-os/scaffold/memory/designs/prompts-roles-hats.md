@@ -24,7 +24,7 @@ registry/
   prompts/general/standard.md  # Blank KERNEL+V scaffold
 ```
 
-The `prompt` skill (`skills/prompt/SKILL.md`) manages this registry: `prompt draft <description>` grounds a new prompt in vault context (via `vault-query`) and the KERNEL+V structure before returning it; `prompt create <slug>` runs an interview and saves one directly; `prompt list` and `prompt <slug>` read back what's saved. None of these flows apply a prompt on the operator's behalf, drafted or retrieved content is always handed back for the operator to review, edit, and send. That's the line that keeps prompts out of the "Claude activates this" category even though a skill now manages the registry: the skill manages storage and drafting, not execution. The framework shapes your input; it's yours, not Claude's.
+The `prompt` skill (`skills/prompt/SKILL.md`) manages this registry: `prompt draft <description>` grounds a new prompt in vault context (via `/vault query`) and the KERNEL+V structure before returning it; `/prompt create <slug>` runs an interview and saves one directly; `/prompt list` and `/prompt <slug>` read back what's saved. None of these flows apply a prompt on the operator's behalf, drafted or retrieved content is always handed back for the operator to review, edit, and send. That's the line that keeps prompts out of the "Claude activates this" category even though a skill now manages the registry: the skill manages storage and drafting, not execution. The framework shapes your input; it's yours, not Claude's.
 
 ---
 
@@ -32,7 +32,7 @@ The `prompt` skill (`skills/prompt/SKILL.md`) manages this registry: `prompt dra
 
 The original question here was whether roles should be skills at all: making a role a skill sounds like it would mean Claude auto-activates a role based on keyword detection in the task, which is the wrong inversion. You choose the role; Claude adopts it, it should never guess.
 
-The resolution is the **router pattern**: `skills/role/SKILL.md` is one generic skill that fires only on an explicit, deterministic marker, `<slug>:role` inline in a prompt, or `role create <slug>` as a standalone command. It never fires on semantic task content. On activation it runs `scripts/registry_lookup.py --type role --slug <slug>` to resolve the slug to `registry/roles/<slug>.md` (or report it missing, list what exists, and offer to create it), reads that file, and adopts the posture. Adoption is session-scoped: it persists until a new `<slug>:role` trigger replaces it, not just for the one prompt.
+The resolution is the **router pattern**: `skills/role/SKILL.md` is one generic skill that fires only on an explicit, deterministic marker, `<slug>:role` inline in a prompt, or `/role create <slug>` as a standalone command. It never fires on semantic task content. On activation it runs `scripts/registry_lookup.py --type role --slug <slug>` to resolve the slug to `registry/roles/<slug>.md` (or report it missing, list what exists, and offer to create it), reads that file, and adopts the posture. Adoption is session-scoped: it persists until a new `<slug>:role` trigger replaces it, not just for the one prompt.
 
 Each role file defines what that role means _in your context specifically_, for example:
 
@@ -69,7 +69,7 @@ Hats are _not_ auto-activated by task match either. They are manually invoked pe
 - They can reference external assets (checklists, frameworks, output templates).
 - They benefit from a declared tool-permission level, a Critic hat should observe, not write files; a Refiner should be able to.
 
-The router fires on `<slug>:hat` inline, or `hat create <slug>` as a standalone command, resolves the slug via the same `registry_lookup.py` script against `registry/hats/`, and applies the definition's posture, method, and output format directly, without narrating or quoting the definition back to the operator. Unlike roles, hat activation is  **task-scoped**: it applies for the current task only and is released once that response is complete.
+The router fires on `<slug>:hat` inline, or `/hat create <slug>` as a standalone command, resolves the slug via the same `registry_lookup.py` script against `registry/hats/`, and applies the definition's posture, method, and output format directly, without narrating or quoting the definition back to the operator. Unlike roles, hat activation is  **task-scoped**: it applies for the current task only and is released once that response is complete.
 
 Tool scoping is declared in plain language inside the definition, not as a machine-enforced frontmatter tool list: the file states one of `read-only`, `read+write`, `all`, or `none` under `## Tools permitted`, and the router skill treats that as a hard behavioural constraint for the duration of the task, surfacing a conflict rather than silently bypassing it if the task needs a tool the active hat doesn't permit.
 
@@ -114,7 +114,7 @@ read-only
 - Do not critique style when substance is the concern.
 ```
 
-`hat create <slug>` interviews the operator for each of these sections (including the tools-permitted level), writes the file, and adds a row to `registry/hats/index.md`.
+`/hat create <slug>` interviews the operator for each of these sections (including the tools-permitted level), writes the file, and adds a row to `registry/hats/index.md`.
 
 ---
 
@@ -136,7 +136,7 @@ Output: file/s and any associated formatting information
 Verify: Do not return as complete or finalised unless: conditions
 ```
 
-Both markers in that Task field are deterministic router triggers, not semantic cues. The `role` router resolves `{{role}}` and adopts it for the session; the `hat` router resolves `{{hat}}` and applies it for this task; both go through the same `registry_lookup.py` script, which is also what the `prompt` skill uses to resolve saved prompt slugs. That script is the single source of truth for "does this slug exist," so no router ever invents a role, hat, or prompt that isn't actually on disk, it either loads the real definition, or reports what's available and offers to create one.
+Both markers in that Task field are deterministic router triggers, not semantic cues. The `/role` router resolves `{{role}}` and adopts it for the session; the `/hat` router resolves `{{hat}}` and applies it for this task; both go through the same `registry_lookup.py` script, which is also what the `/prompt` skill uses to resolve saved prompt slugs. That script is the single source of truth for "does this slug exist," so no router ever invents a role, hat, or prompt that isn't actually on disk, it either loads the real definition, or reports what's available and offers to create one.
 
 When role and hat are both active: the role defines identity, the hat defines method. They compose, reason as the role would, using the hat's procedure.
 
@@ -144,8 +144,3 @@ When role and hat are both active: the role defines identity, the hat defines me
 
 The separation matters: roles define _who Claude is being_, hats define _how Claude is thinking_, and KERNEL+V defines _what you're asking_. Conflating any two of these produces prompts that are either underdefined or over-constrained. Making roles and hats routable, rather than either hand-pasted or auto-activated, keeps the operator in control of  *when* posture and method engage while removing the copy-paste overhead of loading them manually each time.
 
----
-
-## Future direction: a `wiki` CLI
-
-Both routers, and the `prompt` skill, currently depend on a Claude session to interpret the trigger and call `registry_lookup.py` on the operator's behalf. An open idea is a `wiki` CLI, a deterministic command-line tool parallel to `scripts/vault_router.py` and `scripts/vault_scaffold.py`, that could query, list, and manipulate registry and wiki content directly from a shell. That would let an operator look up a role, hat, or prompt, or browse the wiki, without going through Claude Cowork or any AI session at all. Not yet built; worth revisiting once the router pattern above is stable and the shape of a non-Claude-Cowork operator workflow is clearer.

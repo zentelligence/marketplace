@@ -1,0 +1,53 @@
+# Live table views over memory/decisions/*.md, built from each file's frontmatter. Requires
+# Obsidian's Bases core plugin; degrades harmlessly if unopened, memory/decisions/index.md is
+# the plain-Markdown fallback. Edit via the contextos MCP base_apply tool where available, not
+# by hand, to keep filters, views, and property display names in sync.
+filters:
+  file.folder == "memory/decisions"
+properties:
+  file.name:
+    displayName: File
+  note.id:
+    displayName: ID
+  note.date:
+    displayName: Date
+  note.status:
+    displayName: Status
+  note.applies_to:
+    displayName: Applies to
+  note.superseded_by:
+    displayName: Superseded by
+views:
+  - type: table
+    name: All decisions
+    order:
+      - note.id
+      - file.name
+      - note.date
+      - note.status
+    sort:
+      - property: note.date
+        direction: DESC
+  - type: table
+    name: Adopted
+    filters:
+      note.status == "adopted"
+    order:
+      - note.id
+      - file.name
+      - note.date
+    sort:
+      - property: note.date
+        direction: DESC
+  - type: table
+    name: Superseded
+    filters:
+      note.status == "superseded"
+    order:
+      - note.id
+      - file.name
+      - note.date
+      - note.superseded_by
+    sort:
+      - property: note.date
+        direction: DESC

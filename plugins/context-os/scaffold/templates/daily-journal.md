@@ -39,7 +39,7 @@ tags: [daily]
 
 ## Working notes
 
-> Thinking in progress. Project notes. Things agents and operators are actively working through. Can be structured or rough; whatever serves the work.
+> Thinking in progress. Project notes. Things agents or operators are actively working through. Can be structured or rough; whatever serves the work.
 
 
 

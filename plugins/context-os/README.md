@@ -89,4 +89,15 @@ This vault is fully compatible with Obsidian. Recommended plugins:
 - **Templater** - for `templates/` support
 - **Dataview** - for querying memory metadata
 
-Obsidian advanced markdown, Bases, Canvases, mermaid diagrams are supported by ContextOS MCP.
+Obsidian advanced markdown, Bases, Canvases, mermaid diagrams are supported by ContextOS MCP tools, however use of `obsidian-skills` plugin is recommended to fully understand the supported file formats:
+
+```
+/plugin marketplace add kepano/obsidian-skills
+/plugin install obsidian@obsidian-skills
+```
+
+---
+
+## Licence
+
+Apache License 2.0. See [LICENSE](LICENSE).

@@ -29,7 +29,8 @@ vault update | update vault | sync vault | apply plugin update
 | Input | Source | Required |
 | --- | --- | --- |
 | `.contextos/state.json` | Vault (created on first run if absent) | No |
-| Plugin's own `scripts/`, `scaffold/registry/`, `scaffold/templates/`, `scaffold/memory/designs/` | Installed plugin | Yes |
+| Plugin's own `scripts/`, `scaffold/registry/`, `scaffold/templates/`, `scaffold/memory/designs/`, `scaffold/memory/decisions/` | Installed plugin | Yes |
+| Plugin's own individually-tracked files: `scaffold/memory/operating/vault-decisions.md`, `scaffold/memory/decisions.base` | Installed plugin | Yes |
 
 ---
 

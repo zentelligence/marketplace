@@ -44,7 +44,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from vault_scaffold import PLUGIN_COPY_DIRS, scaffold  # noqa: E402
+from vault_scaffold import PLUGIN_COPY_DIRS, PLUGIN_COPY_FILES, scaffold  # noqa: E402
 
 STATE_DIR = ".contextos"
 STATE_FILE = "state.json"
@@ -101,6 +101,28 @@ def _plugin_version(plugin_root: Path) -> str | None:
 # ---------------------------------------------------------------------------
 
 
+def _shipped_file_pairs(plugin_root: Path, vault_root: Path) -> list[tuple[Path, Path]]:
+    """Return every (plugin source, vault destination) pair PLUGIN_COPY_DIRS and
+    PLUGIN_COPY_FILES define, regardless of whether the destination exists yet."""
+    pairs: list[tuple[Path, Path]] = []
+
+    for src_rel, dst_rel in PLUGIN_COPY_DIRS:
+        src_dir = plugin_root / src_rel
+        dst_dir = vault_root / dst_rel
+        if not src_dir.exists():
+            continue
+        for src_file in sorted(src_dir.rglob("*")):
+            if src_file.is_file():
+                pairs.append((src_file, dst_dir / src_file.relative_to(src_dir)))
+
+    for src_rel, dst_rel in PLUGIN_COPY_FILES:
+        src_file = plugin_root / src_rel
+        if src_file.exists():
+            pairs.append((src_file, vault_root / dst_rel))
+
+    return pairs
+
+
 def refresh_shipped_files(
     plugin_root: Path,
     vault_root: Path,
@@ -123,47 +145,37 @@ def refresh_shipped_files(
     unchanged: list[str] = []
     conflicts: list[str] = []
 
-    for src_rel, dst_rel in PLUGIN_COPY_DIRS:
-        src_dir = plugin_root / src_rel
-        dst_dir = vault_root / dst_rel
-        if not src_dir.exists():
+    for src_file, dst_file in _shipped_file_pairs(plugin_root, vault_root):
+        if not dst_file.exists():
+            continue  # scaffold() handles files that don't exist yet.
+
+        vault_rel = dst_file.relative_to(vault_root).as_posix()
+        src_hash = _hash_file(src_file)
+        dst_hash = _hash_file(dst_file)
+        recorded_hash = synced.get(vault_rel)
+
+        if recorded_hash is None:
+            # No baseline yet: record current state without overwriting.
+            synced[vault_rel] = dst_hash
+            (unchanged if dst_hash == src_hash else conflicts).append(vault_rel)
             continue
 
-        for src_file in sorted(src_dir.rglob("*")):
-            if not src_file.is_file():
-                continue
-            rel = src_file.relative_to(src_dir)
-            dst_file = dst_dir / rel
-            if not dst_file.exists():
-                continue  # scaffold() handles files that don't exist yet.
+        operator_edited = dst_hash != recorded_hash
+        plugin_changed = src_hash != recorded_hash
 
-            vault_rel = dst_file.relative_to(vault_root).as_posix()
-            src_hash = _hash_file(src_file)
-            dst_hash = _hash_file(dst_file)
-            recorded_hash = synced.get(vault_rel)
-
-            if recorded_hash is None:
-                # No baseline yet: record current state without overwriting.
-                synced[vault_rel] = dst_hash
-                (unchanged if dst_hash == src_hash else conflicts).append(vault_rel)
-                continue
-
-            operator_edited = dst_hash != recorded_hash
-            plugin_changed = src_hash != recorded_hash
-
-            if not operator_edited and plugin_changed:
-                if not dry_run:
-                    shutil.copyfile(src_file, dst_file)
+        if not operator_edited and plugin_changed:
+            if not dry_run:
+                shutil.copyfile(src_file, dst_file)
+            synced[vault_rel] = src_hash
+            updated.append(vault_rel)
+        elif operator_edited and plugin_changed and dst_hash != src_hash:
+            conflicts.append(vault_rel)
+        else:
+            # Neither side changed, or the operator's edit already matches
+            # the new plugin content.
+            if dst_hash == src_hash:
                 synced[vault_rel] = src_hash
-                updated.append(vault_rel)
-            elif operator_edited and plugin_changed and dst_hash != src_hash:
-                conflicts.append(vault_rel)
-            else:
-                # Neither side changed, or the operator's edit already matches
-                # the new plugin content.
-                if dst_hash == src_hash:
-                    synced[vault_rel] = src_hash
-                unchanged.append(vault_rel)
+            unchanged.append(vault_rel)
 
     return {"updated": updated, "unchanged": unchanged, "conflicts": conflicts}
 

@@ -13,7 +13,7 @@ Idempotent: existing files are never overwritten by the scaffold step. The build
 ## Triggers
 
 ```
-vault init | initialise vault | initialize vault | init vault
+vault init | init | initialise vault | initialize vault
 ```
 
 ---
@@ -96,7 +96,6 @@ Once the operator has answered: `"We'll call each of these an entity from here o
 For each entity named:
 - `"Give it a short, stable name that will be used as a label throughout the vault."` Store as `entity_name`.
 - `"Is this entity active, dormant, or being wound down?"` Store as `entity_status`. Note dormant or excluded entities clearly so they are not mistaken for active.
-- `"Is this entity more sensitive than the others by default? For example, a family entity may warrant more caution than a business one."` Store as `entity_sensitivity`.
 
 After listing all entities: `"How do these entities relate to each other? Note any where decisions in one affect another (for example, personal finances affecting a business initiative, or family commitments affecting work capacity)."`
 
@@ -324,7 +323,7 @@ Establish what the agent is and is not permitted to do without sign-off. This la
 
 `"Let's define how I should operate on your behalf. There are no right answers here; it is about calibrating to how you want to work."`
 
-**E1:** `"What kinds of tasks should I be able to do without asking first? Think about drafting, organising, summarising, updating internal logs. Does this differ by entity?"` Store as `autonomy_open`.
+**E1:** `"What kinds of tasks should I be able to do without asking first? Think about drafting, organising, summarising. Does this differ by entity?"` Store as `autonomy_open`.
 
 **E2:** `"What should always require your explicit sign-off before anything is sent, published, or finalised? Think: client-facing communication, financial documents, public content, anything touching family members."` Store as `autonomy_gated`.
 
