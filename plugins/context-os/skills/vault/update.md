@@ -20,7 +20,7 @@ vault update | update vault | sync vault | apply plugin update
 
 ## Tools required
 
-`Read`, `Bash`
+`Read`, `Bash`, `AskUserQuestion`
 
 ---
 
@@ -47,7 +47,13 @@ vault update | update vault | sync vault | apply plugin update
 
 ## Flow
 
-### Step 1: preview
+### Step 1: protective gate
+
+This process performs bulk mutations of directories and files in a vault. Using `AskUserQuestion`, ask the operator to confirm two things before continuing: that they have a recent backup, and that they want to proceed. Stop if either is declined.
+
+If they do not have a backup, some vaults may have a backup script in `scripts/utility/`, such as `backup-obsidian-vault.ps1` (Windows) or `backup-obsidian-vault-macos.sh` (macOS). Simple backup options are duplicating (copy-paste) or compressing (right-click, compress) the vault folder. Re-ask once they confirm it is done, or to proceed without one. 
+
+### Step 2: preview
 
 Run a dry run first so the operator sees what would change before anything is written:
 
@@ -59,11 +65,11 @@ python $CONTEXT_OS_PLUGIN_ROOT/scripts/vault_update.py --vault-root . --dry-run 
 
 If the vault has no `.contextos/state.json` yet, this run establishes the baseline only; report that plainly, no files are refreshed on a vault's first `vault update` run (new directories and stub files are still added, since that reuses the same additive logic as `vault init`'s scaffold step and carries no risk of clobbering operator content).
 
-### Step 2: confirm
+### Step 3: confirm
 
 Summarise for the operator: directories and files that would be added, files that would be refreshed (and are safe to, being unmodified since the last sync), and any conflicts (locally edited files where the plugin's copy has also changed). Ask before proceeding if there is anything to refresh or any conflicts to review; adding brand-new files needs no confirmation, since that step is purely additive and identical in risk to `vault init`'s scaffold step.
 
-### Step 3: apply
+### Step 4: apply
 
 ```bash
 session-start >/dev/null 2>&1
@@ -71,11 +77,11 @@ source "${TMPDIR:-/tmp}/plugin-data.env" 2>/dev/null
 python $CONTEXT_OS_PLUGIN_ROOT/scripts/vault_update.py --vault-root . --json
 ```
 
-### Step 4: report conflicts
+### Step 5: report conflicts
 
 For each conflicting file, tell the operator its path and that both they and the plugin have changed it since the last sync. Do not resolve conflicts automatically; offer to show a diff (`mcp__contextos__git_diff` if the vault is a git repository, otherwise read both versions) and let the operator decide whether to keep their version, take the plugin's, or merge manually.
 
-### Step 5: log
+### Step 6: log
 
 If MCP is available, call `mcp__contextos__vault_log_append` with `entry: "update | synced to plugin v<version> | <n> added, <n> updated, <n> conflicts"` and `files` set to the added and updated paths. Otherwise, append to `memory/log/YYYY/MM/YYYY-MM-DD.md`:
 ```
