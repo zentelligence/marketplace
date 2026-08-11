@@ -3,33 +3,19 @@
     "SessionStart": [
       {
         "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "scripts/session-start",
-            "timeout": 30
-          }
-        ]
+        "hooks": []
       }
     ],
     "PreToolUse": [
       {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "scripts/session-start"
-          }
-        ]
+        "matcher": "",
+        "hooks": []
       }
     ],
     "PostToolUse": [
       {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "M=\"${CLAUDE_PROJECT_DIR:-${CLAUDE_PROJECT_ROOT:-$HOME/mnt}}\"; O=\"outputs\"; [ -d \"$M/output\" ] && O=\"output\"; D=\"${CLAUDE_PLUGIN_DATA:-$M/$O}/probe-results/hooks\"; mkdir -p \"$D\"; TS=$(date -u +%Y-%m-%dT%H%M%SZ); printf 'hook=PostToolUse tool=%s fired_at=%s\\n' \"${CLAUDE_TOOL_NAME:-}\" \"$TS\" >> \"$D/${TS}-post-tool-use.txt\""
-          }
-        ]
+        "matcher": "",
+        "hooks": []
       }
     ]
   }
