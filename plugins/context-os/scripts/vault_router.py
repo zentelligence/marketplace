@@ -2,9 +2,10 @@
 """
 vault_router.py: Deterministic command routing and pre-flight checks for the vault skill.
 
-Parses the operator's command string, matches it to a sub-skill, performs pre-flight
-checks (vault root accessible, schema version compatible), and returns a structured
-JSON result for the AI to act on.
+Parses the operator's command string, matches it to a sub-skill, performs a pre-flight
+check (vault root accessible), reports whether `vault update` is recommended (installed
+plugin version versus the vault's last-synced version in `.contextos/state.json`), and
+returns a structured JSON result for the AI to act on.
 
 Usage:
     python $CLAUDE_PLUGIN_ROOT/scripts/vault_router.py --vault-root . --command "ingest"
@@ -20,8 +21,10 @@ Output JSON fields:
     skill:            Matched skill name, or null if unmatched.
     skill_file:       Relative path to sub-skill file, or null.
     args:             Parsed arguments extracted from the command (e.g. files, topic, question).
-    preflight:        Pre-flight check results (vault_root_ok, schema_ok, schema_version).
+    preflight:        Pre-flight check results (vault_root_ok, synced_plugin_version,
+                      current_plugin_version, update_recommended).
     errors:           List of blocking error messages. Empty on success.
+    warnings:         List of non-blocking advisories (e.g. `vault update` recommended).
 """
 
 from __future__ import annotations
@@ -31,6 +34,10 @@ import json
 import re
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+
+from vault_update import _load_state, _plugin_version  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -141,55 +148,62 @@ def route_command(command: str) -> dict:
 # Pre-flight
 # ---------------------------------------------------------------------------
 
-def preflight(vault_root: Path) -> dict:
-    """Check vault root accessibility and schema version compatibility.
+def preflight(vault_root: Path, plugin_root: Path | None = None) -> dict:
+    """Check vault root accessibility and whether `vault update` is recommended.
 
-    Returns a dict with keys: vault_root_ok, schema_ok, schema_version, errors.
+    `vault_root_ok` (CLAUDE.md exists) is the only hard-blocking check; a vault
+    that has never run `vault update`, or is behind the installed plugin's
+    version, is advisory only, since `vault_update.py`'s scaffold step is
+    additive and safe to run at any time, and skills do not depend on a
+    specific plugin version to function.
+
+    Returns a dict with keys: vault_root_ok, synced_plugin_version,
+    current_plugin_version, update_recommended, errors, warnings.
     """
     claude_md = vault_root / "CLAUDE.md"
 
     if not claude_md.exists():
         return {
             "vault_root_ok": False,
-            "schema_ok": False,
-            "schema_version": None,
+            "synced_plugin_version": None,
+            "current_plugin_version": None,
+            "update_recommended": False,
             "errors": [
                 f"CLAUDE.md not found at {vault_root}. Run `vault init` to scaffold the vault."
             ],
+            "warnings": [],
         }
 
-    content = claude_md.read_text(encoding="utf-8")
+    if plugin_root is None:
+        plugin_root = Path(__file__).parent.parent
 
-    # Match "Schema v1.0" or "schema v1.0" anywhere in the file.
-    m = re.search(r"[Ss]chema\s+v(\d+)\.(\d+)", content)
-    if not m:
-        return {
-            "vault_root_ok": True,
-            "schema_ok": False,
-            "schema_version": None,
-            "errors": [
-                "Schema version not found in CLAUDE.md. Run `vault init` to complete setup."
-            ],
-        }
+    current_plugin_version = _plugin_version(plugin_root)
+    synced_plugin_version = _load_state(vault_root).get("plugin_version")
 
-    major = int(m.group(1))
-    version_str = f"{m.group(1)}.{m.group(2)}"
+    warnings: list[str] = []
+    update_recommended = False
 
-    if major < 1:
-        return {
-            "vault_root_ok": True,
-            "schema_ok": False,
-            "schema_version": version_str,
-            "errors": [
-                f"Schema version {version_str} is below minimum 1.0. Run `vault init`."
-            ],
-        }
+    if synced_plugin_version is None:
+        update_recommended = True
+        warnings.append(
+            "No .contextos/state.json found. Run `vault update` to record the "
+            "installed plugin version and pick up any scaffold content added "
+            "since this vault was created."
+        )
+    elif current_plugin_version is not None and synced_plugin_version != current_plugin_version:
+        update_recommended = True
+        warnings.append(
+            f"Vault last synced to plugin v{synced_plugin_version}; installed "
+            f"plugin is v{current_plugin_version}. Run `vault update`."
+        )
 
     return {
         "vault_root_ok": True,
-        "schema_ok": True,
-        "schema_version": version_str,
+        "synced_plugin_version": synced_plugin_version,
+        "current_plugin_version": current_plugin_version,
+        "update_recommended": update_recommended,
         "errors": [],
+        "warnings": warnings,
     }
 
 
@@ -197,9 +211,9 @@ def preflight(vault_root: Path) -> dict:
 # Main
 # ---------------------------------------------------------------------------
 
-def run(vault_root: Path, command: str) -> dict:
+def run(vault_root: Path, command: str, plugin_root: Path | None = None) -> dict:
     """Run pre-flight checks and route the command. Returns combined result dict."""
-    pf = preflight(vault_root)
+    pf = preflight(vault_root, plugin_root)
     route = route_command(command)
 
     errors = list(pf["errors"])
@@ -217,10 +231,12 @@ def run(vault_root: Path, command: str) -> dict:
         "args": route["args"],
         "preflight": {
             "vault_root_ok": pf["vault_root_ok"],
-            "schema_ok": pf["schema_ok"],
-            "schema_version": pf["schema_version"],
+            "synced_plugin_version": pf["synced_plugin_version"],
+            "current_plugin_version": pf["current_plugin_version"],
+            "update_recommended": pf["update_recommended"],
         },
         "errors": errors,
+        "warnings": pf["warnings"],
     }
 
 
@@ -274,7 +290,8 @@ def main() -> None:
         sys.exit(1)
 
     vault_root = resolve_vault_root(args.vault_root)
-    result = run(vault_root, command)
+    plugin_root = Path(__file__).parent.parent
+    result = run(vault_root, command, plugin_root)
 
     print(json.dumps(result, ensure_ascii=False, indent=2))
 

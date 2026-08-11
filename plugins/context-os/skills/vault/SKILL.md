@@ -52,23 +52,24 @@ The script returns JSON with:
 - `skill`: matched skill name (or `null` if unrecognised)
 - `skill_file`: path to the sub-skill file to load
 - `args`: parsed arguments (e.g. `topic`, `question`)
-- `preflight`: vault root and schema version checks
+- `preflight`: vault root check plus advisory plugin-sync status (`synced_plugin_version`, `current_plugin_version`, `update_recommended`)
 - `errors`: blocking errors; non-empty means do not proceed
+- `warnings`: non-blocking advisories (e.g. `vault update` recommended)
 
 If `errors` is non-empty, report them to the operator and stop.
 If `skill` is matched, load `skill_file` and execute it, passing any `args`.
 If `skill` is null but no preflight errors, ask one short clarifying question.
+If `warnings` is non-empty, mention it to the operator once (e.g. "this vault is behind the installed plugin version; run `vault update` when convenient") and proceed with the matched skill regardless — it is a nudge, not a gate.
 
 ---
 
 ## Pre-flight checks (all skills)
 
-Pre-flight is handled by `vault_router.py`. The script checks:
+Pre-flight is handled by `vault_router.py`. The only hard-blocking check is:
 
 1. `CLAUDE.md` exists at the vault root.
-2. Schema version in `CLAUDE.md` is 1.x or higher.
 
-If either check fails, the `errors` field in the router output will be non-empty. Report the error and prompt the operator to run `vault init`.
+If that fails, the `errors` field in the router output will be non-empty. Report the error and prompt the operator to run `vault init`. Plugin-sync status (whether `.contextos/state.json` is missing or behind the installed plugin's version) is advisory only, surfaced via `warnings`, since `vault update`'s scaffold step is additive and skills do not depend on a specific plugin version to function.
 
 ---
 

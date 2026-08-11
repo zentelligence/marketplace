@@ -1,7 +1,7 @@
 {
     "name": "context-os",
     "displayName": "ContextOS",
-    "version": "1.16.0",
+    "version": "1.16.2",
     "description": "A structured personal knowledge vault. Human-accessible via Obsidian; AI-operated via Claude Cowork.",
     "author": {
         "name": "Zentelligence",
@@ -49,6 +49,7 @@
         "skills/hat/SKILL.md",
         "skills/role/SKILL.md",
         "skills/prompt/SKILL.md",
+        "skills/vault/SKILL.md",
         "skills/vault/capture.md",
         "skills/vault/consolidate.md",
         "skills/vault/distil-transcript.md",
