@@ -12,6 +12,7 @@ Usage:
     python $CLAUDE_PLUGIN_ROOT/scripts/vault_router.py --vault-root . --command "vault ingest ~/Downloads/notes.md"
     python $CLAUDE_PLUGIN_ROOT/scripts/vault_router.py --vault-root . --command "query what do I know about AI tools"
     python $CLAUDE_PLUGIN_ROOT/scripts/vault_router.py --vault-root . --command "vault research zettelkasten"
+    python $CLAUDE_PLUGIN_ROOT/scripts/vault_router.py --vault-root . --command "vault init quick"
 
 CLI flags:
     --vault-root PATH   Vault root directory (default: cwd).
@@ -46,7 +47,7 @@ from vault_update import _load_state, _plugin_version  # noqa: E402
 
 # Each entry: (regex pattern, skill name, skill file path)
 ROUTES: list[tuple[str, str, str]] = [
-    (r"vault\s+init|initialise\s+vault|initialize\s+vault|init\s+vault|^init$",
+    (r"vault\s+init|initialise\s+vault|initialize\s+vault|init\s+vault|quick\s+init|init\s+quick|^init$",
      "init", "skills/vault/init.md"),
     (r"vault\s+ingest|process\s+inbox|^ingest\b",
      "ingest", "skills/vault/ingest.md"),
@@ -90,6 +91,15 @@ ARG_PATTERNS: dict[str, tuple[str, str]] = {
 # Routing
 # ---------------------------------------------------------------------------
 
+def _parse_init_args(command: str) -> dict[str, str]:
+    """Detect a `quick` mode flag anywhere in an init command (e.g. `vault init quick`,
+    `quick init`, `init quick`). Absence means the full guided build-out.
+    """
+    if re.search(r"\bquick\b", command, re.IGNORECASE):
+        return {"mode": "quick"}
+    return {}
+
+
 def _parse_log_args(command: str) -> dict[str, str]:
     """Extract `entry` and, if present, `files` from a `vault log ...` command.
 
@@ -127,6 +137,8 @@ def route_command(command: str) -> dict:
         if re.search(pattern, command_stripped, re.IGNORECASE):
             if skill_name == "log":
                 args = _parse_log_args(command_stripped)
+            elif skill_name == "init":
+                args = _parse_init_args(command_stripped)
             else:
                 args = {}
                 if skill_name in ARG_PATTERNS:
@@ -169,7 +181,7 @@ def preflight(vault_root: Path, plugin_root: Path | None = None) -> dict:
             "current_plugin_version": None,
             "update_recommended": False,
             "errors": [
-                f"CLAUDE.md not found at {vault_root}. Run `vault init` to scaffold the vault."
+                f"CLAUDE.md not found at {vault_root}. Run `/vault init` to scaffold the vault."
             ],
             "warnings": [],
         }

@@ -4,21 +4,7 @@
 
 ## Purpose
 
-Write an end-of-session capture file that records decisions, outcomes, and proposed memory updates from the current session. Proposes updates only; never applies them. Application is handled by `vault consolidate` after operator review.
-
----
-
-## Triggers
-
-```
-vault capture | capture | end of session | session capture | save session
-```
-
----
-
-## Tools required
-
-`Read`, `Write`, `Bash`
+Write an end-of-session capture file that records decisions, outcomes, and proposed memory updates from the current session. Proposes updates only; never applies them. Application is handled by `/vault consolidate` after operator review.
 
 ---
 
@@ -104,7 +90,7 @@ For any additional proposed memory updates with specific file paths and changes,
 
 Tell the operator:
 > "Session captured. Review the proposed updates in [capture file path], then run
-> `vault consolidate` when ready to apply them."
+> `/vault consolidate` when ready to apply them."
 
 Do not apply any proposed updates during this step.
 

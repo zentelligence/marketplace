@@ -4,21 +4,7 @@
 
 ## Purpose
 
-High-fidelity extraction and structuring of conversational transcripts (masterclasses, webinars, coaching calls, training sessions, sales calls) into `memory/raw/`. Completeness over compression: the goal is a durable, referenceable extract, not a summary. Offers handoff to `vault ingest` after writing.
-
----
-
-## Triggers
-
-```
-vault distil | vault distil transcript | distil transcript | process transcript | import transcript
-```
-
----
-
-## Tools required
-
-`Read`, `Write`, `Bash`
+High-fidelity extraction and structuring of conversational transcripts (masterclasses, webinars, coaching calls, training sessions, sales calls) into `memory/raw/`. Completeness over compression: the goal is a durable, referenceable extract, not a summary. Offers handoff to `/vault ingest` after writing.
 
 ---
 
@@ -45,7 +31,7 @@ vault distil | vault distil transcript | distil transcript | process transcript 
 
 1. If no transcript was provided (a bare `vault distil-transcript` with nothing to process — not uploaded in this session and not found in `inbox/`), ask the operator to paste the transcript, upload it, or place it in `inbox/`, then wait for a response rather than stopping silently.
 2. Read `memory/operating/vault-conduct.md`.
-3. Confirm the source is a conversational transcript (not a document or export; those go through `vault ingest` directly).
+3. Confirm the source is a conversational transcript (not a document or export; those go through `/vault ingest` directly).
 4. Identify: format (video transcript, audio transcript, structured Q&A, etc.), speaker(s), and date if available.
 
 ### Step 2: profile the file
@@ -135,7 +121,7 @@ domain: "<best-fit wiki domain>"
 
 ### Step 5: hand off
 
-Tell the operator: "Transcript distilled to `memory/raw/...`. Run `vault ingest` to compile into wiki articles, or run `vault query` to search across this and other extracts."
+Tell the operator: "Transcript distilled to `memory/raw/...`. Run `/vault ingest` to compile into wiki articles, or run `/vault query` to search across this and other extracts."
 
 ---
 
@@ -143,4 +129,4 @@ Tell the operator: "Transcript distilled to `memory/raw/...`. Run `vault ingest`
 
 - Completeness over compression. Preserve the speaker's exact language wherever possible.
 - `memory/raw/` files are immutable after the session in which they were created. Never edit them.
-- If the source is not a conversational transcript, redirect to `vault ingest` instead.
+- If the source is not a conversational transcript, redirect to `/vault ingest` instead.

@@ -4,7 +4,8 @@ vault_query.py: ContextOS retrieval script v1.0.
 
 Traverses memory/wiki/ index hierarchy, performs a YAML-based full-vault scan
 for cross-domain article discovery, scans memory/entities/ for entity summary
-files, scans each entity's projects/ directory for active content, and scans
+files, recursively scans each entity's own top-level directory for active
+content under whatever subfolder names the operator uses, and scans
 memory/insights/ directly. inbox/, processed/, and outbox/ are vault-root
 folders shared across all entities, ephemeral, and excluded from every scan.
 Returns a structured JSON payload for LLM synthesis.
@@ -564,7 +565,9 @@ def scan_entity_dirs(
     """Scan each entity's working directory for queryable content.
 
     Discovers entity slugs from memory/entities/index.md, then scans each
-    {slug}/ for markdown files (in practice, {slug}/projects/). inbox/,
+    {slug}/ recursively for markdown files, whatever subfolder structure or
+    naming the operator has organised it into; the scaffold does not
+    prescribe a folder name for an entity's working content. inbox/,
     processed/, and outbox/ are vault-root folders shared across all entities,
     not per-entity subdirectories, so they are never encountered here; the
     exclusion below is defensive, for a legacy vault with pre-migration

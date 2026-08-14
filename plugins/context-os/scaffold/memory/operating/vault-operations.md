@@ -13,22 +13,22 @@ Every vault operation appends to `memory/log/YYYY/MM/YYYY-MM-DD.md`. The date is
 HH:MM | <origin> | <operation> | <summary> | files: <comma-separated list>
 ```
 
-See `vault-conduct.md`'s Log format section for what `<origin>` (`manual`,
-`agent`, or an MCP tool name) means.
+See `vault-conduct.md`'s Log format section for what `<origin>` (`manual`, `agent`, or an MCP tool name) means.
 
 **`vault` Operations:**
 
 | Operation | Triggered by |
 | --- | --- |
-| `init` | `vault init` |
-| `ingest` | `vault ingest` |
-| `research` | `vault research` |
-| `capture` | `vault capture` |
-| `consolidate` | `vault consolidate` |
-| `lint` | `vault lint` |
-| `distil` | `vault distil transcript` |
-| `log` | `vault log <entry>` |
-| `update` | `vault update` |
+| `init` | `/vault init [quick]` |
+| `ingest` | `/vault ingest [files]` |
+| `research` | `/vault research <topic>` |
+| `capture` | `/vault capture` |
+| `consolidate` | `/vault consolidate` |
+| `lint` | `/vault lint` |
+| `distil` | `/vault distil transcript [files]` |
+| `query` | `/vault query <question>` |
+| `log` | `/vault log <entry>` |
+| `update` | `/vault update` |
 
 ---
 

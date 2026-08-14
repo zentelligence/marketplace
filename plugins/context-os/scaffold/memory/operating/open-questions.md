@@ -45,4 +45,4 @@ On resolution: set `status: resolved`, `resolved` to the date, and fill in `## A
 
 ---
 
-*Questions predating this file live where they were raised (e.g. inline `## Open Questions` sections, or `context-os-mcp requirements.md §6`); migrate them here only if a question needs to be tracked to resolution or cited.*
+*Questions predating this file live where they were raised (e.g. inline `## Open Questions` sections); migrate them here only if a question needs to be tracked to resolution or cited.*

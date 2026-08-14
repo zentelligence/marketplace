@@ -27,7 +27,8 @@ Personal knowledge vault. Read at the start of every Cowork session.
 │   ├── operating/             How the vault operates.
 │   │   ├── vault-conduct.md   Rules for writing vault files. Load before writing.
 │   │   ├── vault-operations.md  Log format and operation index.
-│   │   ├── current-priorities.md  Macro, Meso, and Micro horizon priorities.
+│   │   ├── rhythm.md           Planning horizon names, scope, and status taxonomy.
+│   │   ├── current-priorities.md  Current-period outcomes and non-negotiables per horizon.
 │   │   └── global-instructions.md  Comprehensive, self-contained Cowork paste block.
 │   ├── entities/              Entities overviews and summary tracking.
 │   ├── raw/                   Processed source extracts (immutable).
@@ -64,13 +65,13 @@ Vault management operations are triggered via the `vault` skill command routed t
 | Command | When |
 | --- | --- |
 | `/vault init` | First-run setup. Scaffolds the full structure and personalises vault files. |
-| `/vault ingest` | Files in inbox/. Process to memory. |
-| `/vault research` | Research a topic. Web search → memory/research/ → wiki. |
-| `/vault query` | Answer any question from vault knowledge. **Always use this before navigating memory/wiki/ manually.** |
+| `/vault ingest [files]` | Files in inbox/, or as specified → memory/raw/ → wiki. |
+| `/vault research <topic>` | Research a topic. Web search → memory/research/ → wiki. |
+| `/vault query <question>` | Answer any question from vault knowledge. **Always use this before navigating memory/wiki/ manually.** |
 | `/vault capture` | End of any meaningful session. Record decisions, outcomes, proposed updates. |
 | `/vault consolidate` | After reviewing a capture file. Apply approved memory updates. |
 | `/vault lint` | Periodic quality audit. Report only, no edits. |
-| `/vault distil transcript` | Process a conversational transcript to memory/raw/. |
+| `/vault distil transcript [files]` | Process a conversational transcript to memory/raw/. |
 | `/vault log <entry>` | Append one manual entry to the daily operation log. |
 | `/vault update` | After a plugin upgrade. Adds new scaffold content, refreshes unmodified shipped files. |
 

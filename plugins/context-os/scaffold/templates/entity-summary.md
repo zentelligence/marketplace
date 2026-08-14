@@ -23,5 +23,5 @@
 - [<entity>/](<entity>/index.md)
 
 <!--
-Filename: memory/entities/<slug>.md. Written during `vault init` (Phase D) for each entity in the entity map, and kept current thereafter. Add a row to memory/entities/index.md and memory/index.md when a new entity is added.
+Filename: memory/entities/<slug>.md. Written during `/vault init` (Phase D) for each entity in the entity map, and kept current thereafter. Add a row to memory/entities/index.md and memory/index.md when a new entity is added.
 -->

@@ -10,27 +10,13 @@ Process source material into the vault memory system: files placed in the shared
 
 ---
 
-## Triggers
-
-```
-vault ingest | ingest | process inbox | files in inbox
-```
-
----
-
-## Tools required
-
-`Read`, `Write`, `Edit`, `Bash`
-
----
-
 ## Inputs
 
 | Input | Source | Notes |
 | --- | --- | --- |
-| `args.files` | Router (operator named file(s) in the command, e.g. `vault ingest ~/notes.md`) | One or more paths, comma- or space-separated; may be absolute, `~`-relative, or vault-relative; may or may not sit in an inbox |
+| `args.files` | Router (operator named file(s) in the command, e.g. `/vault ingest ~/notes.md`) | One or more paths, comma- or space-separated; may be absolute, `~`-relative, or vault-relative; may or may not sit in an inbox |
 | Files in `inbox/` | Operator-placed | Any format: md, txt, pdf, docx, csv, export |
-| Uncited files in `memory/research/` | `vault research` output | Research files not yet referenced by a `**Source:**` line in any wiki article |
+| Uncited files in `memory/research/` | `/vault research` output | Research files not yet referenced by a `**Source:**` line in any wiki article |
 | `memory/operating/vault-conduct.md` | Vault | Read before writing any file |
 | `memory/index.md` and relevant subtree indexes | Vault | For determining where to write |
 
@@ -53,7 +39,7 @@ vault ingest | ingest | process inbox | files in inbox
 ### Step 1: pre-flight
 
 1. Read `memory/operating/vault-conduct.md`.
-2. If the router passed `args.files` (the operator named specific file(s) in the command, e.g. `vault ingest ~/Downloads/notes.md`), split on commas or whitespace and resolve each path (`~`-expand, or resolve relative to the vault root). Check each exists.
+2. If the router passed `args.files` (the operator named specific file(s) in the command, e.g. `/vault ingest ~/Downloads/notes.md`), split on commas or whitespace and resolve each path (`~`-expand, or resolve relative to the vault root). Check each exists.
    - If at least one resolves, process exactly this set for the rest of this run — skip the inbox and `memory/research/` scans in steps 3 to 4 below.
    - If none resolve to an existing file, tell the operator the named path(s) could not be found and ask them to confirm the path, or place the file in `inbox/`, then wait for a response rather than falling silently through to the scans below.
 3. Otherwise, scan `inbox/` for files.
@@ -64,7 +50,7 @@ vault ingest | ingest | process inbox | files in inbox
    grep -rlF "<path>" memory/wiki/
    ```
    A research file with no match is pending; treat it as an available source.
-5. If no `args.files` were given, `inbox/` is empty, and no uncited research files exist (a bare `vault ingest` with nothing to process), ask the operator which file(s) to ingest: paste the content directly, upload a file, place it in    `inbox/`, or name a path directly, then wait for a response rather than stopping silently.
+5. If no `args.files` were given, `inbox/` is empty, and no uncited research files exist (a bare `/vault ingest` with nothing to process), ask the operator which file(s) to ingest: paste the content directly, upload a file, place it in    `inbox/`, or name a path directly, then wait for a response rather than stopping silently.
 6. For each file, determine: format, source type (operator-named path, inbox, or `memory/research/`), likely domain, and whether a raw extract already exists for this source.
 
 ### Step 2: extract to raw

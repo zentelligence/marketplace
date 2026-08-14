@@ -1,34 +1,16 @@
 ---
 name: hat
-description: "Load a task-phase hat definition from the vault registry and activate it for the current task."
+description: "Loads a task-phase hat definition from `registry/hats/` in the vault registry and activates its thinking mode, method, tool constraints, and output format for the current task, or authors a new one. Fires only on the explicit inline trigger `<slug>:hat` appearing anywhere in a prompt (e.g. 'Wearing the critic:hat, evaluate this draft.', 'As architect:role, wearing the solver:hat, propose three solutions.'), or the explicit command `hat create <slug>` / `/hat create <slug>` to define a new hat. Composes with an active `<slug>:role` (role shapes identity, hat shapes method) but does not require one. Does not fire for `<slug>:role` or `<slug>:agent` (owned by the sibling role and agent skills), for `prompt draft/create/list` (owned by the prompt skill), or for `/vault <command>` and vault-content requests (owned by the vault skill). Does not infer or auto-activate a hat from task phrasing or method requests alone ('be more critical', 'think step by step') without the literal `:hat` suffix naming a registry slug."
+license: Apache-2.0
+user-invocable: true
+disable-model-invocation: false
+argument-hint: "create <slug>"
+arguments: ["command"]
 ---
 
 # Skill: hat
 
-Loads a hat definition from `registry/hats/` and activates its thinking mode, method, and output format. Activated when the operator uses `<slug>:hat` anywhere in their prompt. Also handles `hat create <slug>` to author new hat definitions.
-
----
-
-## Triggers
-
-```
-<slug>:hat
-hat create <slug>
-```
-
-Appears inline in the task field of a KERNEL+V prompt. Examples:
-
-- `"As architect:role, wearing the critic:hat, evaluate the proposed schema."`
-- `"Wearing the solver:hat, propose three solutions."`
-- `"hat create refiner"`
-
----
-
-## Tools required
-
-`Read`, `Write`, `Edit`, `Bash`
-
-`Write` and `Edit` are used only during hat creation. Normal activation uses only `Read` and `Bash`, subject to further restriction by the hat definition's `tools` field.
+Loads a hat definition from `registry/hats/` and activates its thinking mode, method, and output format. Activated when the operator uses `<slug>:hat` anywhere in their prompt. Also handles `/hat create <slug>` to author new hat definitions.
 
 ---
 
@@ -42,7 +24,7 @@ If a ContextOS MCP server is configured for this vault, the creation flow (Step 
 
 | Input | Source | Required |
 | --- | --- | --- |
-| Hat slug | Inline `<slug>:hat` or `hat create <slug>` | Yes |
+| Hat slug | Inline `<slug>:hat` or `/hat create <slug>` | Yes |
 | `registry/hats/<slug>.md` | Vault registry | For activation |
 | `registry/hats/index.md` | Vault registry | For available-hats listing |
 | `memory/operating/vault-conduct.md` | Vault | For creation flow only |
@@ -68,7 +50,7 @@ Extract the hat slug from the trigger. Normalise to lowercase-hyphenated form.
 Detect the trigger type:
 
 - `<slug>:hat` in a larger prompt → **activation flow** (Steps 2-3).
-- `hat create <slug>` as a standalone command → **creation flow** (Step 4).
+- `/hat create <slug>` as a standalone command → **creation flow** (Step 4).
 
 Run the lookup for either trigger:
 
@@ -98,12 +80,12 @@ If `found` is false:
 
 1. Report to the operator:
    > "No hat definition found for `<slug>`. Available hats: [list from `available`, or 'none yet'].
-   > Run `hat create <slug>` to define a new one, or continue without a hat."
+   > Run `/hat create <slug>` to define a new one, or continue without a hat."
 2. Ask whether to proceed without a hat, use the closest available one, or create a new one.
 
 ### Step 4: creation flow
 
-When the operator requests `hat create <slug>`:
+When the operator requests `/hat create <slug>`:
 
 1. Read `memory/operating/vault-conduct.md`.
 2. Check whether `registry/hats/<slug>.md` already exists. If so, confirm before overwriting.
@@ -132,7 +114,7 @@ Used only when `templates/registry-hat.md` is not present in the vault.
 
 ```markdown
 ---
-name: <Display Name> Hat
+name: <lowercase slug>-hat
 description: <one-line description>
 ---
 

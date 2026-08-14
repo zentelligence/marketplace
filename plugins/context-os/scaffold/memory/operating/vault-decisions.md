@@ -51,4 +51,4 @@ IDs are sequential (VD-001, VD-002, ...) and never reused. Superseding a decisio
 
 ---
 
-*Decisions predating this file live where they were made (e.g. `memory/designs/insights-schema.md`, `memory/designs/migration-notes.md`); backfill as VD entries only if a decision needs to be cited or revisited.*
+*Decisions predating this file live where they were made; backfill as VD entries only if a decision needs to be cited or revisited.*

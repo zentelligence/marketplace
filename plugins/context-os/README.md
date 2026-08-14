@@ -10,7 +10,7 @@ Personal knowledge vault, powered by ContextOS.
 | ---- | ------ |
 | 1 | Open this vault in Obsidian for human-readable access |
 | 2 | Open this vault in Claude Cowork for AI-operated access |
-| 3 | Run `vault init` to complete first-run setup |
+| 3 | Run `/vault init` to complete first-run setup |
 | 4 | After init, paste the block from `memory/operating/global-instructions.md` into Cowork Settings → Edit Global Instructions |
 
 ---
@@ -33,7 +33,7 @@ Personal knowledge vault, powered by ContextOS.
 | `inbox/` | Drop zone for inbound files, shared across all entities. Ephemeral. |
 | `outbox/` | Drop zone for outbound files, shared across all entities. Ephemeral. |
 | `processed/` | Post-ingestion archive, shared across all entities. Ephemeral. |
-| `<entity>/` | per <entity> detail (e.g. `projects/`). |
+| `<entity>/` | per <entity> detail, organised however the operator prefers. |
 | `registry/` | Prompts, roles, hats, agents, scripts, and skills registry. |
 | `standards/` | Referenceable operating standards. |
 | `templates/` | Reusable file templates. |

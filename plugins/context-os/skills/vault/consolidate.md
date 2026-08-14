@@ -4,21 +4,7 @@
 
 ## Purpose
 
-Apply approved memory updates from session capture files. This is the second half of the capture cycle: `vault capture` proposes, `vault consolidate` applies. The operator reviews and approves before consolidate runs.
-
----
-
-## Triggers
-
-```
-vault consolidate | consolidate | apply updates | apply memory updates | consolidate memory
-```
-
----
-
-## Tools required
-
-`Read`, `Write`, `Edit`
+Apply approved memory updates from session capture files. This is the second half of the capture cycle: `/vault capture` proposes, `/vault consolidate` applies. The operator reviews and approves before consolidate runs.
 
 ---
 

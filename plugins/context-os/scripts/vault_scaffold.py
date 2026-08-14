@@ -163,20 +163,16 @@ def _stubs(vault_root: Path, entity_slug: str, entity_name: str) -> dict[str, st
             | [vault-operations.md](vault-operations.md) | Log format and script reference. |
             | [vault-decisions.md](vault-decisions.md) | Decision-recording process. Decisions themselves live in `memory/decisions/`. |
             | [open-questions.md](open-questions.md) | Question-recording process. Questions themselves live in `memory/questions/`. |
-            | [current-priorities.md](current-priorities.md) | Planning horizons and current priorities. |
+            | [rhythm.md](rhythm.md) | Planning horizon names, scope, and status taxonomy. Structural, changes rarely. |
+            | [current-priorities.md](current-priorities.md) | Current-period outcomes and non-negotiables per horizon. |
             | [autonomy-policy.md](autonomy-policy.md) | What the agent may and may not do without sign-off. |
             | [anti-patterns.md](anti-patterns.md) | Execution, content, and conversational patterns to avoid. |
             | [global-instructions.md](global-instructions.md) | Comprehensive, self-contained Cowork paste block. |
         """),
-        "memory/operating/current-priorities.md": _dedent("""
-            # Current Priorities
-
-            _Run `vault init` to populate this file with your planning horizons and priorities._
-        """),
         "memory/operating/autonomy-policy.md": _dedent("""
             # Autonomy Policy
 
-            _Run `vault init` to populate this file with your autonomy and control settings._
+            _Run `/vault init` to populate this file with your autonomy and control settings._
         """),
         "memory/operating/anti-patterns.md": _dedent("""
             # Anti-Patterns
@@ -199,11 +195,7 @@ def _stubs(vault_root: Path, entity_slug: str, entity_name: str) -> dict[str, st
 
             Paste the block below into Cowork Settings, Edit Global Instructions on each device.
 
-            `vault init` will generate this block with your actual vault path after the build-out.
-
-            ---
-
-            Generated: {today}
+            `/vault init` will generate this block with your actual vault path after the build-out.
         """),
         # --- memory/entities ---
         "memory/entities/index.md": _dedent("""
@@ -216,7 +208,7 @@ def _stubs(vault_root: Path, entity_slug: str, entity_name: str) -> dict[str, st
         "memory/entities/personal.md": _dedent("""
             # Personal
 
-            _Run `vault init` to populate this file._
+            _Run `/vault init` to populate this file._
         """),
         # --- memory/raw ---
         "memory/raw/index.md": _dedent("""
@@ -269,7 +261,8 @@ def _stubs(vault_root: Path, entity_slug: str, entity_name: str) -> dict[str, st
         "notes/index.md": _dedent("""
             # Notes
 
-            Scratch notes. Obsidian-facing. Not authoritative. Do not cite in wiki articles.
+            Scratch notes. Obsidian-facing. Not authoritative. Do not cite in wiki articles. 
+            Structure: YYYY/MM/ subfolders for date-based notes, `YYYY-MM-DD-<slug>.md` naming.
         """),
         # --- inbox / processed / outbox (shared, vault-root; not per-entity) ---
         "inbox/index.md": _dedent("""
@@ -294,16 +287,9 @@ def _stubs(vault_root: Path, entity_slug: str, entity_name: str) -> dict[str, st
 
             | Folder | Purpose |
             | --- | --- |
-            | [projects/](projects/index.md) | Personal projects. |
 
             Inbox, processed, and outbox are shared across all entities: see
             `inbox/`, `processed/`, and `outbox/` at the vault root.
-        """),
-        "personal/projects/index.md": _dedent("""
-            # Personal Projects
-
-            | Slug | Name | Status | Description |
-            | --- | --- | --- | --- |
         """),
         # --- registry ---
         "registry/index.md": _dedent("""
@@ -334,10 +320,10 @@ def _stubs(vault_root: Path, entity_slug: str, entity_name: str) -> dict[str, st
             | [learning/](learning/index.md) | Explaining concepts, skill development |
             | [deciding/](deciding/index.md) | Weighing options, identifying risks |
 
-            Run `prompt draft <description>` to have Claude build a new prompt from a
-            plain-language description, grounded in vault context. Run `prompt create
-            <slug> in <category>` to author one directly, `prompt <slug>` to retrieve
-            a saved one, or `prompt list` to browse.
+            Run `/prompt draft <description>` to have Claude build a new prompt from a
+            plain-language description, grounded in vault context. Run `/prompt create
+            <slug> in <category>` to author one directly, `/prompt <slug>` to retrieve
+            a saved one, or `/prompt list` to browse.
         """),
         "registry/roles/index.md": _dedent("""
             # Roles: Index
@@ -356,7 +342,7 @@ def _stubs(vault_root: Path, entity_slug: str, entity_name: str) -> dict[str, st
             ```
 
             See [../prompts/framework.md](../prompts/framework.md) for the prompt structure.
-            Run `role create <slug>` to define a new role.
+            Run `/role create <slug>` to define a new role.
         """),
         "registry/hats/index.md": _dedent("""
             # Hats: Index
@@ -375,7 +361,7 @@ def _stubs(vault_root: Path, entity_slug: str, entity_name: str) -> dict[str, st
             ```
 
             See [../prompts/framework.md](../prompts/framework.md) for the prompt structure.
-            Run `hat create <slug>` to define a new hat.
+            Run `/hat create <slug>` to define a new hat.
         """),
         "registry/agents/index.md": _dedent("""
             # Agents: Index
@@ -395,7 +381,7 @@ def _stubs(vault_root: Path, entity_slug: str, entity_name: str) -> dict[str, st
             ```
 
             See [../prompts/framework.md](../prompts/framework.md) for the prompt structure.
-            Run `agent create <slug>` to define a new agent.
+            Run `/agent create <slug>` to define a new agent.
         """),
         "registry/skills/index.md": _dedent("""
             # Skills: Index
@@ -438,21 +424,14 @@ def _entity_stubs(entity_slug: str, entity_name: str) -> dict[str, str]:
 
             | Folder | Purpose |
             | --- | --- |
-            | [projects/](projects/index.md) | Projects and initiatives. |
 
             Inbox, processed, and outbox are shared across all entities: see
             `inbox/`, `processed/`, and `outbox/` at the vault root.
         """),
-        f"{entity_slug}/projects/index.md": _dedent(f"""
-            # {entity_name} Projects
-
-            | Slug | Name | Status | Description |
-            | --- | --- | --- | --- |
-        """),
         f"memory/entities/{entity_slug}.md": _dedent(f"""
             # {entity_name}
 
-            _Run `vault init` to populate this file._
+            _Run `/vault init` to populate this file._
         """),
     }
 
@@ -495,11 +474,21 @@ PLUGIN_COPY_DIRS = [
 # (decisions.base, questions.base), or files inside memory/operating/ whose siblings
 # are stub-generated by _stubs() rather than copied, so the directory as a whole is
 # not eligible for PLUGIN_COPY_DIRS without clobbering those dynamic stubs.
+#
+# rhythm.md and current-priorities.md ship with a Macro/Meso/Micro default, not blank
+# stubs, so `vault init quick` has real structure to grow into. That default is a
+# quick-mode fallback only: the full walkthrough's Phase C always overwrites both
+# files fresh from the operator's own horizon terminology (see skills/vault/init.md
+# Step 5), never keeping the shipped default in place.
 PLUGIN_COPY_FILES = [
+    ("scaffold/memory/operating/vault-conduct.md", "memory/operating/vault-conduct.md"),
+    ("scaffold/memory/operating/vault-operations.md", "memory/operating/vault-operations.md"),
     ("scaffold/memory/operating/vault-decisions.md", "memory/operating/vault-decisions.md"),
     ("scaffold/memory/decisions.base", "memory/decisions.base"),
     ("scaffold/memory/operating/open-questions.md", "memory/operating/open-questions.md"),
     ("scaffold/memory/questions.base", "memory/questions.base"),
+    ("scaffold/memory/operating/rhythm.md", "memory/operating/rhythm.md"),
+    ("scaffold/memory/operating/current-priorities.md", "memory/operating/current-priorities.md"),
 ]
 
 
@@ -573,7 +562,7 @@ DIRECTORIES = [
     "memory/wiki",
     "notes",
     "outbox",
-    "personal/projects",
+    "personal",
     "processed",
     "registry/agents",
     "registry/hats",
@@ -586,8 +575,7 @@ DIRECTORIES = [
 ]
 
 ENTITY_DIRECTORIES = [
-    "{slug}/projects",
-    "memory/entities/{slug}",
+    "{slug}/",
 ]
 
 

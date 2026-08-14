@@ -4,8 +4,6 @@ Prompts for project scoping, task breakdown, prioritisation, and execution seque
 
 | File | Purpose |
 | --- | --- |
-| [project-scope.md](project-scope.md) | Scope a project and break it into sequenced, owned tasks |
-| [10x-vision-mapping.md](10x-vision-mapping.md) | Reverse-engineer a 10X transformation into 90-day, 6-month, and 12-month milestones with a weekly action step |
 
 ## Scope
 

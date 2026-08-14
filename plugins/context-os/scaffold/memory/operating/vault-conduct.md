@@ -64,8 +64,7 @@ domain: <best-fit domain>
 
 ## Log format
 
-Every vault operation appends to `memory/log/YYYY/MM/YYYY-MM-DD.md`. The date is
-carried by the file path and the daily stub header alone; entries do not repeat it:
+Every vault operation appends to `memory/log/YYYY/MM/YYYY-MM-DD.md`. The date is carried by the file path and the daily stub header alone; entries do not repeat it:
 
 ```
 HH:MM | <origin> | <operation> | <summary> | files: <comma-separated list>
@@ -75,12 +74,12 @@ HH:MM | <origin> | <operation> | <summary> | files: <comma-separated list>
 - `manual` — an explicitly composed entry: the `vault log` skill, or any call
   through the MCP server's `vault_log_append` tool (its manual-entry path always
   stamps `manual`, regardless of caller).
-- `agent` — a skill logging its own routine operation directly, in the no-MCP
+- `/agent` — a skill logging its own routine operation directly, in the no-MCP
   fallback path only.
 - `<mcp-tool-name>` — stamped automatically by the MCP server itself when a
   `fs_*` tool call mutates a vault file. No skill writes this directly.
 
 Example:
 ```
-14:32 | agent | ingest | 2 file(s) processed | files: raw/2026/2026-06/2026-06-19-article.md, wiki/technology/ai/article.md
+14:32 | agent | ingest | 2 file(s) processed | files: memory/raw/2026/2026-06/2026-06-19-article.md, memory/wiki/technology/ai/article.md
 ```

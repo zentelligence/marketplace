@@ -4,7 +4,6 @@ Prompts for decision support: clarifying what's being decided, surfacing overloo
 
 | File | Purpose |
 | --- | --- |
-| [option-comparison.md](option-comparison.md) | Compare two or more options across criteria that matter for a specific decision |
 
 ## Scope
 

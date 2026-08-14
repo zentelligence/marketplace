@@ -8,20 +8,6 @@ Audit the wiki for quality issues. Produces a report only; no edits during the l
 
 ---
 
-## Triggers
-
-```
-vault lint | lint | audit vault | audit wiki | vault audit | check quality
-```
-
----
-
-## Tools required
-
-`Read`, `Bash`
-
----
-
 ## Inputs
 
 | Input | Source | Required |
@@ -84,13 +70,13 @@ Read the script output. Present the structured report to the operator covering:
 For each category of issues, suggest remediation:
 
 - **Structural issues**: offer to create missing index.md files or fix broken links.
-- **Quality issues**: offer a targeted `vault consolidate` to add missing sections.
+- **Quality issues**: offer a targeted `/vault consolidate` to add missing sections.
 - **Citation issues**: ask the operator to supply the correct source path.
 - **Open questions**: ask whether to prioritise resolution in the next session.
-- **Stale articles**: ask whether to refresh via `vault research` or manual update.
+- **Stale articles**: ask whether to refresh via `/vault research` or manual update.
 - **Stale proposed insights**: ask whether to adopt (promote to a working principle), dismiss, or leave pending with a reason.
 
-No edits are made during the lint pass itself. All remediation happens in subsequent `vault consolidate` or `vault ingest` sessions.
+No edits are made during the lint pass itself. All remediation happens in subsequent `/vault consolidate` or `/vault ingest` sessions.
 
 ---
 

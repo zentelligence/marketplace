@@ -4,7 +4,6 @@ Prompts for data interpretation, performance review, and problem diagnosis. Inpu
 
 | File | Purpose |
 | --- | --- |
-| [business-metrics.md](business-metrics.md) | Analyse business performance metrics and surface actionable insight |
 
 ## Scope
 

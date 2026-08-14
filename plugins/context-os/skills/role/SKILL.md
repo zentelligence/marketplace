@@ -1,34 +1,16 @@
 ---
 name: role
-description: "Load a cognitive-posture role definition from the vault registry and adopt it for the current session."
+description: "Loads a cognitive-posture role definition from `registry/roles/` in the vault registry and adopts it for the current session, or authors a new one. Fires only on the explicit inline trigger `<slug>:role` appearing anywhere in a prompt (e.g. 'As architect:role, evaluate this schema.', 'Acting as engineer:role, review this PR.'), or the explicit command `/role create <slug>` / `/role create <slug>` to define a new role. Does not fire for `<slug>:hat` or `<slug>:agent` (owned by the sibling hat and agent skills), for `prompt draft/create/list` (owned by the prompt skill), or for `/vault <command>` and vault-content requests (owned by the vault skill). Does not infer or auto-adopt a role from task phrasing, tone requests, or persona language alone ('act like a lawyer', 'be more concise') without the literal `:role` suffix naming a registry slug."
+license: Apache-2.0
+user-invocable: true
+disable-model-invocation: false
+argument-hint: "create <slug>"
+arguments: ["command"]
 ---
 
 # Skill: role
 
-Loads a role definition from `registry/roles/` and adopts its cognitive posture. Activated when the operator uses `<slug>:role` anywhere in their prompt. Also handles `role create <slug>` to author new role definitions.
-
----
-
-## Triggers
-
-```
-<slug>:role
-role create <slug>
-```
-
-Appears inline in the task field of a KERNEL+V prompt. Examples:
-
-- `"As architect:role, evaluate the proposed schema."`
-- `"Act as engineer:role and review this PR."`
-- `"role create strategist"`
-
----
-
-## Tools required
-
-`Read`, `Write`, `Edit`, `Bash`
-
-`Write` and `Edit` are used only during role creation. Normal activation requires only `Read` and `Bash`.
+Loads a role definition from `registry/roles/` and adopts its cognitive posture. Activated when the operator uses `<slug>:role` anywhere in their prompt. Also handles `/role create <slug>` to author new role definitions.
 
 ---
 
@@ -42,7 +24,7 @@ If a ContextOS MCP server is configured for this vault, the creation flow (Step 
 
 | Input | Source | Required |
 | --- | --- | --- |
-| Role slug | Inline `<slug>:role` or `role create <slug>` | Yes |
+| Role slug | Inline `<slug>:role` or `/role create <slug>` | Yes |
 | `registry/roles/<slug>.md` | Vault registry | For activation |
 | `registry/roles/index.md` | Vault registry | For available-roles listing |
 | `memory/operating/vault-conduct.md` | Vault | For creation flow only |
@@ -68,7 +50,7 @@ Extract the role slug from the trigger. Strip any preposition ("As ", "as a ", e
 Detect the trigger type:
 
 - `<slug>:role` in a larger prompt → **activation flow** (Steps 2-3).
-- `role create <slug>` as a standalone command → **creation flow** (Step 4).
+- `/role create <slug>` as a standalone command → **creation flow** (Step 4).
 
 Run the lookup for either trigger:
 
@@ -97,12 +79,12 @@ If `found` is false:
 
 1. Report to the operator:
    > "No role definition found for `<slug>`. Available roles: [list from `available`, or 'none yet'].
-   > Run `role create <slug>` to define a new one, or continue without a role definition."
+   > Run `/role create <slug>` to define a new one, or continue without a role definition."
 2. Ask whether to proceed without a role, use the closest available one, or create a new one.
 
 ### Step 4: creation flow
 
-When the operator requests `role create <slug>`:
+When the operator requests `/role create <slug>`:
 
 1. Read `memory/operating/vault-conduct.md`.
 2. Check whether `registry/roles/<slug>.md` already exists. If so, confirm before overwriting.

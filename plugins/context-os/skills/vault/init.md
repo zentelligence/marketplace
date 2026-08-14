@@ -6,39 +6,30 @@
 
 First-run skill. Scaffolds the complete vault directory structure from the schema spec, then conducts a guided build-out conversation to personalise all critical files.
 
-Idempotent: existing files are never overwritten by the scaffold step. The build-out always writes content to section-stub files regardless of prior state, so `vault init` can be re-run to complete an interrupted build-out.
+Two modes:
+- **Full** (default): the complete guided interview, Phases A to G, roughly 10 to 15 minutes.
+- **Quick**: a handful of questions, about 2 minutes, that produces a working `CLAUDE.md` and global instructions block today. Everything the quick pass doesn't ask about is written as an explicit "not yet captured" stub rather than skipped silently, so a later `/vault init` re-run has clear gaps to fill.
 
----
-
-## Triggers
-
-```
-vault init | init | initialise vault | initialize vault
-```
-
----
-
-## Tools required
-
-`Read`, `Write`, `Edit`, `Bash`
+Idempotent: existing files are never overwritten by the scaffold step. The build-out always writes content to section-stub files regardless of prior state, so `/vault init` can be re-run to complete an interrupted build-out, or to upgrade a quick pass to the full walkthrough.
 
 ---
 
 ## Critical personalisation files
 
-| File | Purpose | Phase |
-| --- | --- | --- |
-| `memory/identity/identity.md` | Name, location, values with trade-offs, throughline | B |
-| `memory/identity/who-am-i.md` | Roles, backstory, goals, throughline, language | B |
-| `memory/entities/personal.md` | Social profiles, technology subscriptions | B |
-| `memory/operating/current-priorities.md` | Planning horizons and priorities (operator-defined) | C |
-| `memory/entities/index.md` | Entity registry (updated with real entity names) | D |
-| `memory/index.md` | Memory master index (updated with real entity names) | D |
-| `memory/operating/autonomy-policy.md` | What the agent may and may not do without sign-off | E |
-| `memory/operating/anti-patterns.md` | Execution, content, and conversational patterns to avoid | E |
-| `memory/identity/voice-profile.md` | Audiences, messaging themes, examples, discrimination rule | F (optional) |
-| `memory/operating/global-instructions.md` | Comprehensive, self-contained Cowork paste block: structure, tone, autonomy, anti-patterns, priorities | G |
-| `CLAUDE.md` | Copied from `scaffold/COWORK.md`, then `{{OperatorName}}` replaced with operator's first name | G |
+| File | Purpose | Phase | Quick mode |
+| --- | --- | --- | --- |
+| `memory/identity/identity.md` | Name, location, values with trade-offs, throughline | B | Name and location only; rest stubbed |
+| `memory/identity/who-am-i.md` | Roles, backstory, goals, throughline, language | B | Name and location only; rest stubbed |
+| `memory/entities/personal.md` | Social profiles, technology subscriptions | B | Location only; rest stubbed |
+| `memory/operating/rhythm.md` | Horizon names, planning scope, and status taxonomy (operator-defined) | C | Left as the shipped Macro/Meso/Micro default |
+| `memory/operating/current-priorities.md` | Current-period outcomes and non-negotiables per horizon | C | One-line focus prepended if given; shipped default otherwise left as-is |
+| `memory/entities/index.md` | Entity registry (updated with real entity names) | D | Written from personal, family (if separate), and named businesses |
+| `memory/index.md` | Memory master index (updated with real entity names) | D | Written from personal, family (if separate), and named businesses |
+| `memory/operating/autonomy-policy.md` | What the agent may and may not do without sign-off | E | Gated section only; rest stubbed |
+| `memory/operating/anti-patterns.md` | Execution, content, and conversational patterns to avoid | E | Left as the scaffolded stub |
+| `memory/identity/voice-profile.md` | Audiences, messaging themes, examples, discrimination rule | F (optional) | Left as the scaffolded stub |
+| `memory/operating/global-instructions.md` | Comprehensive, self-contained Cowork paste block: structure, tone, autonomy, anti-patterns, priorities | G | Generated, with skipped sections marked explicitly |
+| `CLAUDE.md` | Copied from `scaffold/COWORK.md`, then `{{OperatorName}}` replaced with operator's first name | G | Same as full mode |
 
 ---
 
@@ -50,14 +41,20 @@ vault init | init | initialise vault | initialize vault
 - The build-out step writes all files only after the relevant phase is complete.
 - Log after all writes are complete.
 - Any question asking the operator to name a pattern, rule, throughline, or theme about themselves must first ask for one or two concrete instances, and must explicitly allow "nothing yet" as a valid answer. Never ask for the abstraction  directly. Schema vocabulary (entity, autonomy policy, anti-pattern, and so on) is introduced as a label after the operator has answered in plain language, never as the term the question is asked in.
+- Quick mode never invents an answer for a question it didn't ask. Every field it skips is written as an explicit "not yet captured" stub, never a fabricated default, except the one safe conservative default named in Step 2Q (autonomy gated).
 
 ---
 
 ## Step 1: pre-flight
 
-1. Read `memory/operating/vault-conduct.md`.
-2. Check whether the vault has already been initialised by inspecting `memory/identity/identity.md`. If it contains real content (not section stubs), warn the operator and ask for confirmation before proceeding.
-3. Confirm the vault's absolute path. Ask:
+1. If `memory/operating/vault-conduct.md` already exists (an existing or partially-initialised vault), read it now. A brand-new vault won't have it yet: the scaffold step (Step 2) is what creates it, so on a first-ever run, read it immediately after Step 2 completes, before writing anything else.
+2. Determine `init_mode`. If the router already resolved `args.mode` to `quick` (the operator said "vault init quick", "quick init", or similar), set `init_mode = quick` and skip the question below. Otherwise ask:
+   > "Two ways to do this: a full walkthrough (10 to 15 minutes, covers identity, entities, planning, autonomy, and voice), or a quick pass (a handful of questions, about 2 minutes) that gets the vault working today and leaves the rest as placeholders you can fill in anytime by running `/vault init` again. Which would you like?"
+   Store as `init_mode` (`quick` or `full`).
+3. Check whether the vault has already been initialised by inspecting `memory/identity/identity.md`.
+   - If it contains the marker text "Quick init: run `/vault init` again", a quick pass is already on file. Tell the operator briefly (e.g. "This vault has a quick init from before; continuing will fill in the rest.") and proceed directly into the chosen mode's build-out. No overwrite confirmation is needed: a quick init is incomplete by definition.
+   - Otherwise, if it contains other real content (not section stubs), warn the operator and ask for confirmation before proceeding.
+4. Confirm the vault's absolute path. Ask:
    > "What is the absolute path to this vault on your machine? (e.g. `/home/name/vault`
    > or `C:\Users\Name\Obsidian\MyVault`)"
    Store as `vault_path`.
@@ -82,6 +79,110 @@ The script is idempotent: existing files are not overwritten. In addition to cre
 - `scripts/utility/` — backup scripts for macOS and Windows
 
 Review the output to confirm what was created or skipped.
+
+If Step 1.1 didn't already read `memory/operating/vault-conduct.md` (a brand-new vault, just scaffolded above), read it now, before writing anything else.
+
+If `init_mode` is `quick`, continue to Step 2Q below and then jump straight to Step 9; skip Steps 3 to 8. If `init_mode` is `full`, skip Step 2Q and continue to Step 3.
+
+---
+
+## Step 2Q: Quick build-out (quick mode only)
+
+Runs instead of Steps 3 to 8. Ask each question below in turn and move on regardless of the answer; do not probe, do not ask follow-ups, do not add extra questions beyond the ones listed. Anything not asked here is written as an explicit "not yet captured" stub, never invented, so the gap is visible and `/vault init` (full) can complete it later.
+
+**Q1:** `"What's your first name?"` Store as `first_name`. `"And your full name, if you'd like it recorded? (optional)"` Store as `full_name`, or default to `first_name` if skipped.
+
+**Q2:** `"Where are you based? (optional)"` Store as `location`, or mark as not provided.
+
+**Q3:** `"Should family be tracked as its own entity here, or folded into personal? (optional, defaults to folded in)"` Store as `family_mode` (`separate` or `folded`; default `folded` if skipped or ambiguous).
+
+**Q4:** `"Any businesses or organisations you're involved in? Name each, and your role in it, for example owner, employee, or founder. (optional)"` Store as `business_list`: a list of `{name, role}` pairs, parsed from the answer (split on commas/"and"; a business named without a stated role gets `/role` marked not provided). Empty if skipped.
+
+**Q5:** `"Anything you're focused on right now worth recording? (optional, one line)"` Store as `quick_priority`.
+
+**Q6:** `"Anything that should always require your sign-off before I send, publish, or finalise it? (optional, one line)"` Store as `quick_gated`. If skipped, default `quick_gated` to: "Not yet defined: treat anything external-facing, financial, or irreversible as requiring sign-off until this is captured."
+
+**Write quick-mode files:**
+
+`memory/identity/identity.md`:
+```markdown
+# Identity
+
+**[full_name]**[, location if provided].
+
+## Throughline
+
+_Not yet captured. Run `/vault init` again to complete this section._
+
+## Values
+
+_Not yet captured. Run `/vault init` again to complete this section._
+
+## Anchoring language
+
+_Not yet captured. Run `/vault init` again to complete this section._
+
+---
+
+Quick init: run `/vault init` again to complete the full build-out.
+```
+
+`memory/identity/who-am-i.md`:
+```markdown
+# Who Am I
+
+**[full_name]**[, based in location if provided].
+
+_Roles, backstory, and current goals not yet captured. Run `/vault init` again to complete this section._
+```
+
+`memory/entities/personal.md`: as in Step 4, using only `location`; leave the Social Profiles and Technology Subscriptions section bodies empty. If `family_mode` is `folded`, add one line under Notes: "Family is tracked here, not as a separate entity." If `family_mode` is `separate`, add: "See [family](family.md) for family-specific content."
+
+**Entities to scaffold**, always including "personal" (handled above, not through the loop below) plus:
+- `family`, only if `family_mode` is `separate`.
+- One entity per `{name, role}` pair in `business_list`.
+
+For each of these (family and each named business):
+1. Derive slug: lowercase-hyphenated, as in Step 6.
+2. Run the scaffold script with entity args, as in Step 6.2.
+3. Write `memory/entities/<slug>.md`:
+   - For `family`: entity type `family`, opening line "Family entity. Detail not yet captured. Run `/vault init` again to complete this section."
+   - For a business: entity type `business`, opening line "[role] role." if a role was given, otherwise "Role not provided.", followed on the next line by "Detail not yet captured. Run `/vault init` again to complete this section."
+   - Leave People, Active Initiatives, Offers, and Key Accounts and Tools section bodies empty in both cases.
+4. Rewrite `memory/entities/index.md` and `memory/index.md` as in Step 6.4 to 6.5, listing personal, family (if separate), and every named business.
+
+Leave `memory/operating/rhythm.md` as its shipped Macro/Meso/Micro default; it is a genuine starting structure, not a blank stub, and the full walkthrough is what personalises it.
+
+If `quick_priority` was given, prepend a section to the top of `memory/operating/current-priorities.md`, under its `# Current Priorities` heading and above the shipped Macro/Meso/Micro sections, rather than replacing the file:
+```markdown
+## Now
+
+- [quick_priority]
+```
+Otherwise leave `memory/operating/current-priorities.md` as its shipped default too.
+
+`memory/operating/autonomy-policy.md`:
+```markdown
+# Autonomy Policy
+
+Defines what the agent may and may not do without explicit sign-off.
+
+## Open (no sign-off required)
+
+_Not yet captured. Run `/vault init` again to complete this section._
+
+## Gated (explicit sign-off required)
+
+- [quick_gated]
+
+## Sensitive categories (never surface unprompted)
+
+_Not yet captured. Run `/vault init` again to complete this section._
+```
+
+Leave `memory/operating/anti-patterns.md` and `memory/identity/voice-profile.md` as the scaffolded stubs; do not write to them in quick mode.
+
+Continue to Step 9. In its `<operator_operating_model>` and `<operator_current_priorities>` sections, use personal plus family (if separate) plus the named businesses for the entities summary, and note that `rhythm.md` is still the shipped Macro/Meso/Micro default (not yet personalised) with `quick_priority` (or "not yet captured" if it was skipped) as the only real current-priorities content; there are no non-negotiables to report. Treat `language_convention`, the detailed Phase D fields (`entity_people`, `entity_initiatives`, `entity_offers`, `entity_tools`), the detailed Phase E fields (`autonomy_open`, `sensitive_categories`, `ap_language`, `ap_structure`, `ap_reasoning`, `ap_advice`, `ap_content`), and all of Phase F as skipped throughout the rest of Step 9, per its existing instruction to say so explicitly rather than omit silently.
 
 ---
 
@@ -221,11 +322,35 @@ Then: `"Does your planning cover all entities together, or does each entity have
 
 **Write Phase C files:**
 
-`memory/operating/current-priorities.md`: Write using the operator's own terminology and horizon structure. Do not impose a fixed template. Use their horizon names as top-level headings.
+Both files ship scaffolded with a Macro/Meso/Micro default; that default exists to give `vault init quick` a real fallback structure, not to steer the full interview. Always write both files fresh from this interview's answers, never leaving the shipped default in place on the theory that it happens to match. Use the operator's own terminology and horizon structure throughout, and do not impose layering if `horizon_names` is empty.
+
+`memory/operating/rhythm.md`: structural definition, changes rarely.
+```markdown
+# Rhythm
+
+How [first_name]'s planning cadence, scope, and status labels work. Structural: changes rarely.
+What's actually being pursued right now lives in `current-priorities.md`.
+
+## Horizons
+
+[operator's horizon names, longest to shortest, one line each with what each one means; or "No layered model; a single rolling focus." if horizon_names is empty]
+
+## Planning scope
+
+[planning_scope, or "Not yet defined."]
+
+## Status taxonomy
+
+[status_taxonomy as bullet list, or omit section body if not provided]
+```
+
+`memory/operating/current-priorities.md`: current-period content, updated far more often than `rhythm.md`. Use the operator's horizon names as top-level headings, matching `rhythm.md`.
 
 Multi-horizon example:
 ```markdown
 # Current Priorities
+
+Current-period outcomes and non-negotiables for each horizon defined in `rhythm.md`.
 
 ## [Horizon 1 name]: [period]
 
@@ -249,13 +374,6 @@ Flat (single-horizon) example:
 ## Now
 
 [outcomes as bullet list]
-```
-
-If a status taxonomy was provided, append:
-```markdown
-## Status taxonomy
-
-[status labels and definitions as bullet list]
 ```
 
 ---
@@ -440,22 +558,71 @@ Write `memory/identity/voice-profile.md` with the gathered content, structured b
    Wrap each major section in an XML-style tag rather than a markdown header. A header opens a section but never closes it, the next header is the only signal that the previous one ended; a tag has an explicit close, which gives the model a bounded unit to hold onto rather than an open-ended stream. This block has no fallback if a section's content is misread or bleeds into its neighbour, so use the more explicit structure:
 
    ```
-   ContextOS vault. Root: <vault_path>. All paths below are relative to this root.
-   Areas tracked: [entity_name (entity_status), entity_name (entity_status), ...].
+   If you are seeing this then your operating context facts are:
+   - you are running within the Claude Desktop application,
+   - operator has intentionally selected 'cowork' mode instead of 'chat' 
+   Safe assumption: the operator desires to interact with or have the conversation be informed by the rules of the knowledge substrate. Even seemingly simple initial prompts could be loaded with nuance. This assumption avoids corrective turns. 
 
-   <vault_structure>
-   memory/ is agent-owned content, start at memory/index.md. 
-   memory/wiki/ is compiled and cited knowledge. 
-   memory/raw/ and memory/research/ are immutable once written.
-   memory/log/ is an append-only operations log. 
-   inbox/, processed/, and outbox/ are operator material, never cite it directly. 
-   registry/ holds prompt, role, hat, agent and skill definitions. Naming is lowercase-hyphenated; every folder has an index.md.
-   Full schema: CLAUDE.md and memory/operating/vault-conduct.md.
-   </vault_structure>
-
-   <tone_and_language>
-   [language_convention, condensed. ap_language, as a bullet list. If both were skipped: "No language or tone constraints captured yet; ask before assuming any."]
-   </tone_and_language>
+   <knowledge_substrate>
+   Root: [vault path] 
+   Plugins: [ContextOS, Obsidian] available in sandbox in randomly named sub-directories of `mnt/.remote-plugins/`
+   Bootstrap: run the `scripts/session-start` bash script installed as part of ContextOS to write the gate flag `CLAUDE_PLUGIN_ALLOW_SKILLS` used by downstream skills
+   Structure:
+   - File and folder names: always lowercase-hyphenated, never TitleCase or spaced.
+   - Every directory has an `index.md` cataloguing contents with one-line summaries.
+   - `index.md` files provide the retrieval mechanism and currency must be maintained.
+   - Double-moustache syntax used for variable placeholders
+   - Directories: operator-owned, agent-interactive 
+      - `registry/`: agent, hat, prompt, role, and skill definitions as used by ContextOS plugin skills
+      - `{{entity}}/`: information about 'personal' (self), family, business, employer, charity, etc
+      - `journal/`: Obsidian 'daily notes'. Operator-interactive. Date-based nesting `YYYY/MM/YYYY-MM-DD.md`.
+      - `notes/`: Obsidian 'unique notes' and scratchpad. Not authoritative. Date-based nesting `YYYY/MM/YYYY-MM-DD-HHmm.md`.
+      - `standards/`: Conventions and standards
+      - `templates/`: File templates, Obsidian Templater-compatible, if desired
+   - `memory/` sub-directories: agent-owned, operator-visible
+      - `glossary.md`: Common terms, references, acronyms, and nicknames
+      - `entities/`: Operating entities and state summary  
+      - `identity/`: About the operator
+      - `operating/`: How the operator works
+      - Date-based nesting `YYYY/MM/` and ISO-date-style file prefixes `YYYY-MM-DD`:
+         - `raw/`: Processed source extracts, markdown only (immutable beyond session)
+         - `research/`: AI-discovered source extracts, markdown only (immutable beyond session)
+         - `coding/`: Append-only coding lessons log. (immutable)
+         - `log/`: Append-only operations log. (immutable)
+         - `sessions/`: Append-only per-session summary. (immutable)
+      - `insights/`: Zettelkasten-style semantic layer parallel to `wiki/`. First-letter sharded `[a-z0-9]/`.
+      - `wiki/`: Compiled topical knowledge. Multi-level: `domain/topic/article` minimum.
+   Content:
+   - Defaults: 
+      - Format: obsidian-markdown 
+      - YAML frontmatter 
+         ---
+         type: 
+         title:
+         entity: 
+         status: active
+         created: 
+         updated: 
+         tags: []
+         aliases: []
+         ---
+      - `# References` links section as backmatter
+         [[link]] one-sentence summary
+   </knowledge_substrate>
+    
+   <quality_mandate>
+   - Empirical studies found total cost of after-the-fact corrections is ~8x getting it right the first time. 
+   - Catch deviations early and correct immediately.
+   - Errors pre-existing is no excuse for perpetuating them
+   - Applies to all content and interactions without exception
+   - Primary source fidelity trumps summarisation efficiency.
+   5 principles:
+   1. Derive from the primary, always.
+   2. Attribution must be verified, not assumed.
+   3. Completeness means in entirity, unless the gap is explicit; asserting partial as complete is an integrity failure
+   4. Internal consistency is non-negotiable; propagate corrections and update links before asserting completion.
+   5. Actionability from zero context is the reproducability test.
+   </quality_mandate>
 
    <autonomy_policy>
    Open (no sign-off required): [autonomy_open, condensed to one line]
@@ -465,37 +632,73 @@ Write `memory/identity/voice-profile.md` with the gathered content, structured b
    Edge cases beyond this summary: memory/operating/autonomy-policy.md
    </autonomy_policy>
 
+   <operator_tone_and_language>
+   [language_convention, condensed. ap_language, as a bullet list. If both were skipped: "No language or tone constraints captured yet; ask before assuming any."]
+   Capture refinements in `memory/identity/communication-style.md`
+   </operator_tone_and_language>
+
+   <operator_voice_and_positioning>
+   Capture refinements in `memory/identity/voice-profile.md`
+
+   Before drafting any external-facing content, establish or ask: 
+   - which entity is publishing and does that entity have specific conventions needing adoption or consideration; 
+   - who is actually reading it, the person with eyes on the page, not who attended or referred them; and, 
+   - whether the brief supplies hook material, key outcomes, prior context, and a call to action. 
+   Skipping this pre-flight produces content that needs multiple revision loops to correct.
+   </operator_voice_and_positioning>
+
    <anti_patterns>
    [ap_language, ap_structure, ap_reasoning, ap_advice, ap_content: inline in full if the combined list is short, otherwise condense to the items with the clearest cost if missed. This is the operating list, not a summary of one.]
    </anti_patterns>
 
-   <current_priorities>
+   <operator_operating_model>
+   [entities summary as a bullet list]
+   Always tag the associated entity/s.
+   Operating rhythm: [horizons, condensed]
+   Full horizon structure, scope, and status taxonomy: `memory/operating/rhythm.md`
+   Actively maintain: `memory/operating/current-priorities.md`
+   </operator_operating_model>
+
+   <operator_current_priorities>
    [top horizon name and period]: [outcomes, condensed]
    Non-negotiables: [horizon_nonneg, condensed, or omit if none]
-   </current_priorities>
+   Full current-period detail: `memory/operating/current-priorities.md`
+   </operator_current_priorities>
 
-   <operations>
-   vault ingest | vault research | vault query | vault capture | vault consolidate |
-   vault lint | vault distil-transcript | vault log <entry> | vault update
-   </operations>
+   <vault_operations>
+   /vault ingest [files] | /vault research <topic> | /vault query <query> | /vault capture | /vault consolidate |
+   /vault lint | /vault distil-transcript [files] | /vault log <entry> | /vault update
+   </vault_operations>
 
-   <session_start>
-   Handled automatically by `scripts/session-start` which scans `$HOME/mnt/.remote-plugins/` and adds the resulting plugin name-to-path map to context. No manual lookup needed. 
-   </session_start>
-
-   <working_conduct>
-   If a file or folder cannot be read due to missing access, request access immediately before retrying. Do not proceed on partial context. Use `vault query` for content questions rather than walking memory/wiki/ directly.
-   </working_conduct>
+   <cowork_conduct>
+   - Run the `scripts/session-startup` bootstrap script from ContextOS plugin before the first response, vault work or not, no exception for urgency or simplicity. 
+   - Invoke the `/vault query` skill command for content queries - direct walks and broad reads are too be minimised. 
+   - Audit every wiki file produced against `anti-patterns.md` before closing the session.
+   - Load `memory/operating/quality-standards.md` before any pass that edits existing files, not just new writes.
+   - Never silently edit existing memory from a session capture; propose the change, wait for approval, apply via `/vault consolidate` skill command.
+   - Never overwrite `memory/raw/` or `memory/research/`; both are immutable beyond session in which they were created.
+   - Derive source files from the primary document or transcript, read in full (in sections if long), never from a session summary or prior description. If a path is available, read it.
+   - If an extract is written from only part of a source, say so explicitly in the file; an acknowledged gap beats a silent partial pass.
+   - Verify content actually appears in a file or session before attributing it there; file names, session order, and prior labels are hypotheses, not evidence.
+   - Never invent a claim to fill a gap; flag it in `Open Questions`.
+   - Never let a hedged speculation from `memory/research/` surface in a wiki article as stated fact; it stays flagged until a primary source confirms it.
+   - Never soften an unsourced claim into a tendency ("often," "typically," "usually," "tends to"); attribute it to a source or observation, or flag it unknown. 
+   - Use indexes for retrieval; don't grep the whole vault.
+   - Every operation appends one line to `memory/log/YYYY/YYYY-MM/YYYY-MM-DD.md` - `HH:MM | [agent|manual] | operation | short description | files: [files touched]`
+   - Never move, copy, or filter an append-only log (`memory/log/YYYY/MM/YYYY-MM-DD.md`) to fix a misplaced entry; append a correction or cross-reference in the right file and leave the original where it landed.
+   - When a schema or convention changes, apply it on the next operation immediately; log old non-compliant content as a migration backlog, don't perpetuate the superseded pattern.
+   - Never declare a review complete on partial verification; check every file in scope against its primary source, or state explicitly what was and wasn't checked.
+   </cowork_conduct>
    ```
 
    Write to `memory/operating/global-instructions.md`.
 
-4. Log. If MCP is available (see the vault router's MCP awareness section), call `mcp__contextos__vault_log_append` with `entry: "init | vault initialised for [first_name]"` and `files` set to the list of all written files. Otherwise,    append to `memory/log/YYYY/MM/YYYY-MM-DD.md`:
+4. Log. Entry text depends on `init_mode`: `"init | vault initialised for [first_name] (quick)"` or `"init | vault initialised for [first_name] (full)"`. If MCP is available (see the vault router's MCP awareness section), call `mcp__contextos__vault_log_append` with that `entry` and `files` set to the list of all written files. Otherwise, append to `memory/log/YYYY/MM/YYYY-MM-DD.md`:
    ```
-  HH:MM | agent | init | vault initialised for [first_name] | files: [list of all written files]
+  HH:MM | agent | init | vault initialised for [first_name] ([quick or full]) | files: [list of all written files]
    ```
 
-5. Tell the operator:
+5. Tell the operator. If `init_mode` was `full`:
    > "Your vault is set up. A few final steps:
    > 1. Paste the block from `memory/identity/who-am-i.md` into Claude Settings, General, Instructions for Claude.
    > 2. Paste the block from `memory/operating/global-instructions.md` into Cowork Settings, Edit Global Instructions on each device.
@@ -504,6 +707,13 @@ Write `memory/identity/voice-profile.md` with the gathered content, structured b
    > and propose memory updates.
    > Run `vault consolidate` weekly to apply agreed self-improvements.
    > Run `vault lint` after a period of significant vault change as a health check"
+
+   If `init_mode` was `quick`:
+   > "Your vault is up and running. A few final steps:
+   > 1. Paste the block from `memory/identity/who-am-i.md` into Claude Settings, General, Instructions for Claude.
+   > 2. Paste the block from `memory/operating/global-instructions.md` into Cowork Settings, Edit Global Instructions on each device.
+   > 3. In Obsidian: enable the Templater plugin, point its template folder to `templates/`, and configure Daily Notes to use `templates/daily-journal.md`.
+   > This was the quick pass, so identity, planning, autonomy, and voice are only lightly filled in, marked `not yet captured` where skipped. Run `/vault init` again whenever you have 10 to 15 minutes for the full walkthrough to fill those in."
 
 ---
 
@@ -514,3 +724,4 @@ Write `memory/identity/voice-profile.md` with the gathered content, structured b
 - Log after all writes are complete.
 - Do not apply voice profile writes unless the operator explicitly requests Phase F.
 - Proprietary frameworks and IP, knowledge domains and the operator's positions within them, detailed audience segments, and key relationships are not covered in this skill. These are built up through ongoing vault ingest and are best addressed in a dedicated follow-up interview after 2 to 4 weeks of vault use.
+- Quick mode (Step 2Q) never asks more than its five questions and never fabricates an answer to a question it didn't ask; skipped detail is always an explicit stub, not invented content.

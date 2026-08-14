@@ -10,22 +10,6 @@ Mandatory: invoke vault-query any time the operator asks a question about vault 
 
 ---
 
-## Triggers
-
-```
-vault query | query vault | what does the vault say | what do I know about | find in vault
-```
-
-Also invoked internally by Business OS and Personal OS domain skills when they need to pull knowledge from the vault.
-
----
-
-## Tools required
-
-`Read`, `Bash`
-
----
-
 ## Inputs
 
 | Input | Source | Required |
@@ -114,7 +98,7 @@ If `missing_indexes` is non-empty, surface each as a vault hygiene note.
 - For insight notes: cite with relative-path link; note `confidence` level and `status`.
 - If an insight is `status: proposed`, flag this: it has not yet been adopted as a working principle.
 - If the answer is substantial and reusable, offer to file it as a new wiki article.
-- If the question cannot be answered from vault content: state what is known, identify the gap, and suggest `vault research` if external sources are needed.
+- If the question cannot be answered from vault content: state what is known, identify the gap, and suggest `/vault research` if external sources are needed.
 
 ---
 

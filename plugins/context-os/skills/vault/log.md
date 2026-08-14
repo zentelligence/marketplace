@@ -4,25 +4,9 @@
 
 ## Purpose
 
-Append one manual entry to the shared daily operation log. This is the shared, routable entry point for recording an operation: every built-in vault skill's own "log" step (see `ingest.md`, `research.md`, `consolidate.md`, and so on) writes to the same file in the same format, and any other skill, including a custom, operator-authored one living outside this plugin, can call `vault log` instead of re-implementing the MCP-or-fallback logic itself.
+Append one manual entry to the shared daily operation log. This is the shared, routable entry point for recording an operation: every built-in vault skill's own "log" step (see `ingest.md`, `research.md`, `consolidate.md`, and so on) writes to the same file in the same format, and any other skill, including a custom, operator-authored one living outside this plugin, can call `/vault log` instead of re-implementing the MCP-or-fallback logic itself.
 
 Mirrors the manual entry path of the ContextOS MCP server's operation log (see `mcp__contextos__vault_log_append` and, upstream of that tool, the `OperationLog::append_manual` function in the `contextos-oplog` crate): a caller-authored entry, a set of touched files, and a trusted timestamp.
-
----
-
-## Triggers
-
-```
-vault log <entry> | log <entry> | vault log <entry> files: <file1>, <file2>
-```
-
-Invoked directly by the operator, or by another skill via `Skill(vault, "log <entry> files: <paths>")` as its own logging step.
-
----
-
-## Tools required
-
-`Read`, `Edit`, `Bash`
 
 ---
 
@@ -33,7 +17,7 @@ Invoked directly by the operator, or by another skill via `Skill(vault, "log <en
 | `entry` | Router `args.entry`: the free-text summary of what happened | Yes |
 | `files` | Router `args.files`: comma-separated vault-relative paths touched by the action | No |
 
-If the router did not extract `entry` (bare `vault log` with nothing to say), ask the caller for the entry text before proceeding. Never write an empty entry.
+If the router did not extract `entry` (bare `/vault log` with nothing to say), ask the caller for the entry text before proceeding. Never write an empty entry.
 
 ---
 
@@ -68,10 +52,6 @@ Then append the entry line. The origin is always `manual`, matching what the MCP
 
 ```
 HH:MM | manual | log | <entry> | files: [<file1>, <file2>]
-```
-
-```
-HH:MM | manual | log | <entry>
 ```
 
 ### Step 3: confirm
