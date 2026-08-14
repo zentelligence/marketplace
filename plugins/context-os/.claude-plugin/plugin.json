@@ -1,7 +1,7 @@
 {
     "name": "context-os",
     "displayName": "ContextOS",
-    "version": "1.17.0",
+    "version": "1.17.1",
     "description": "A structured personal knowledge vault. Human-accessible via Obsidian; AI-operated via Claude Cowork.",
     "author": {
         "name": "Zentelligence",

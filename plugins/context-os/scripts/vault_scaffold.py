@@ -481,14 +481,17 @@ PLUGIN_COPY_DIRS = [
 # files fresh from the operator's own horizon terminology (see skills/vault/init.md
 # Step 5), never keeping the shipped default in place.
 PLUGIN_COPY_FILES = [
-    ("scaffold/memory/operating/vault-conduct.md", "memory/operating/vault-conduct.md"),
-    ("scaffold/memory/operating/vault-operations.md", "memory/operating/vault-operations.md"),
-    ("scaffold/memory/operating/vault-decisions.md", "memory/operating/vault-decisions.md"),
     ("scaffold/memory/decisions.base", "memory/decisions.base"),
-    ("scaffold/memory/operating/open-questions.md", "memory/operating/open-questions.md"),
     ("scaffold/memory/questions.base", "memory/questions.base"),
-    ("scaffold/memory/operating/rhythm.md", "memory/operating/rhythm.md"),
     ("scaffold/memory/operating/current-priorities.md", "memory/operating/current-priorities.md"),
+    ("scaffold/memory/operating/open-questions.md", "memory/operating/open-questions.md"),
+    ("scaffold/memory/operating/quality-standards.md", "memory/operating/quality-standards.md"),
+    ("scaffold/memory/operating/rhythm.md", "memory/operating/rhythm.md"),
+    ("scaffold/memory/operating/task-register.md", "memory/operating/task-register.md"),
+    ("scaffold/memory/operating/vault-conduct.md", "memory/operating/vault-conduct.md"),
+    ("scaffold/memory/operating/vault-decisions.md", "memory/operating/vault-decisions.md"),
+    ("scaffold/memory/operating/vault-operations.md", "memory/operating/vault-operations.md"),
+    ("scaffold/memory/operating/vault-tasks.md", "memory/operating/vault-tasks.md"),
 ]
 
 
