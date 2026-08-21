@@ -1,0 +1,17 @@
+# Python (published plugins carry .py scripts)
+__pycache__/
+*.py[cod]
+*.pyo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp
+*.swo
+
+# Claude Code local state (personal approvals, runtime logs)
+.claude/settings.local.json
+.claude/logs/
