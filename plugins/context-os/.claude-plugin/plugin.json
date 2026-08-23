@@ -1,7 +1,7 @@
 {
     "name": "context-os",
     "displayName": "ContextOS",
-    "version": "1.17.1",
+    "version": "1.17.3",
     "description": "A structured personal knowledge vault. Human-accessible via Obsidian; AI-operated via Claude Cowork.",
     "author": {
         "name": "Zentelligence",
@@ -17,6 +17,7 @@
         "scaffold/memory/decisions/vd-001-one-file-per-decision-or-question.md",
         "scaffold/memory/questions.base",
         "scaffold/memory/questions/index.md",
+        "scaffold/memory/designs/markdown-extension.md",
         "scaffold/memory/designs/prompts-roles-hats.md",
         "scaffold/memory/operating/current-priorities.md",
         "scaffold/memory/operating/open-questions.md",

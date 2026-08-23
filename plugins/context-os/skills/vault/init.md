@@ -703,10 +703,10 @@ Write `memory/identity/voice-profile.md` with the gathered content, structured b
    > 1. Paste the block from `memory/identity/who-am-i.md` into Claude Settings, General, Instructions for Claude.
    > 2. Paste the block from `memory/operating/global-instructions.md` into Cowork Settings, Edit Global Instructions on each device.
    > 3. In Obsidian: enable the Templater plugin, point its template folder to `templates/`, and configure Daily Notes to use `templates/daily-journal.md`.
-   > Run `vault capture` at the end of any meaningful session to record decisions
+   > Run `/vault capture` at the end of any meaningful session to record decisions
    > and propose memory updates.
-   > Run `vault consolidate` weekly to apply agreed self-improvements.
-   > Run `vault lint` after a period of significant vault change as a health check"
+   > Run `/vault consolidate` weekly to apply agreed self-improvements.
+   > Run `/vault lint` after a period of significant vault change as a health check"
 
    If `init_mode` was `quick`:
    > "Your vault is up and running. A few final steps:
