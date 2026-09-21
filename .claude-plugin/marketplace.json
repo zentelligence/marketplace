@@ -12,7 +12,7 @@
             "source": "./plugins/context-os",
             "displayName": "ContextOS",
             "description": "A structured personal knowledge vault. Human-accessible via Obsidian; AI-operated via plugin.",
-            "version": "1.17.1",
+            "version": "1.17.3",
             "author": {
                 "name": "Zentelligence",
                 "email": "support@zentelligence.com.au"

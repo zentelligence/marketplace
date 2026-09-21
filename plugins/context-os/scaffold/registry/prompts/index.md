@@ -80,7 +80,7 @@ Tips, traps, known variations. Optional. Remove if empty.
 
 ## Drafting a prompt
 
-Run `prompt draft <description>` to have Claude build a new KERNEL+V prompt from a plain-language description. The draft is grounded in vault context (entity details, priorities, voice profile) retrieved via `vault-query`, and checked against the KERNEL+V table in `framework.md` before it's returned. Nothing is saved to the registry unless you confirm a category and slug afterwards.
+Run `prompt draft <description>` to have Claude build a new KERNEL+V prompt from a plain-language description. The draft is grounded in vault context (entity details, priorities, voice profile) retrieved via `vault-query`, and checked against the KERNEL+V table in `framework.md` before it's returned. Nothing is saved to the registry unless you confirm a category and slug afterwards; alternatively add `to <file-path>` (e.g. `prompt draft <description> to drafts/weekly-status.md`) to have the draft written straight to a file of your choosing instead, as a plain file, not a registry entry.
 
 ## Adding a prompt
 

@@ -1,11 +1,11 @@
 ---
 name: prompt
-description: "Manages the prompt registry at `registry/prompts/`: drafts a well-formed, reusable KERNEL+V prompt template from a plain-language description, grounded in vault context (`prompt draft <description>`); authors and saves a new one via interview (`prompt create <slug> [in <category>]`); lists saved prompts (`prompt list [<category>]`); or retrieves one (`prompt <slug>`). Unlike role, hat, and agent, a prompt is never activated or applied automatically: the output is always returned to the operator to review, edit, and send. Requires the literal `prompt draft/create/list` command, or an unambiguous request for a reusable prompt template; a bare request to draft or write actual content (an email, a report, a message) is handled directly as normal assistance, not routed through this skill. Does not fire for `<slug>:role`, `<slug>:hat`, or `<slug>:agent` (owned by the sibling role, hat, and agent skills, which do auto-activate or delegate on their trigger), and does not fire for `/vault <command>` or vault-content requests such as querying or capturing memory (owned by the vault skill)."
+description: "Manages the prompt registry at `registry/prompts/`: drafts a well-formed, reusable KERNEL+V prompt template from a plain-language description, grounded in vault context (`prompt draft <description>`), returning it inline or, if the operator designates one, writing it to a plain file (`prompt draft <description> to <file-path>`); authors and saves a new one via interview (`prompt create <slug> [in <category>]`); lists saved prompts (`prompt list [<category>]`); or retrieves one (`prompt <slug>`). Unlike role, hat, and agent, a prompt is never activated or applied automatically: the output is always returned to the operator to review, edit, and send. Requires the literal `prompt draft/create/list` command, or an unambiguous request for a reusable prompt template; a bare request to draft or write actual content (an email, a report, a message) is handled directly as normal assistance, not routed through this skill. Does not fire for `<slug>:role`, `<slug>:hat`, or `<slug>:agent` (owned by the sibling role, hat, and agent skills, which do auto-activate or delegate on their trigger), and does not fire for `/vault <command>` or vault-content requests such as querying or capturing memory (owned by the vault skill)."
 license: Apache-2.0
-when_to_use: "e.g. 'prompt draft a message asking a client for updated scope on a stalled project', 'prompt create quarterly-review in planning', 'prompt list writing', 'prompt email-professional'."
+when_to_use: "e.g. 'prompt draft a message asking a client for updated scope on a stalled project', 'prompt draft a weekly status update to drafts/weekly-status.md', 'prompt create quarterly-review in planning', 'prompt list writing', 'prompt email-professional'."
 user-invocable: true
 disable-model-invocation: false
-argument-hint: "draft <description> | create <slug> [in <category>] | list [<category>] | <slug>"
+argument-hint: "draft <description> [to <file-path>] | create <slug> [in <category>] | list [<category>] | <slug>"
 arguments: ["command"]
 ---
 
@@ -30,6 +30,7 @@ If a ContextOS MCP server is configured for this vault, the creation flow (Step 
 | Input | Source | Required |
 | --- | --- | --- |
 | Description, slug, or category | Operator trigger | Yes |
+| Destination file path | Operator trigger (`prompt draft <description> to <file-path>`) or `AskUserQuestion` | No; only for the draft flow's file-write option |
 | `registry/prompts/framework.md` | Vault registry | For drafting |
 | `registry/prompts/index.md` | Vault registry | For metadata standard and category list |
 | `registry/prompts/<category>/index.md` | Vault registry | For creation and listing |
@@ -44,6 +45,7 @@ If a ContextOS MCP server is configured for this vault, the creation flow (Step 
 | Output | Notes |
 | --- | --- |
 | Drafted prompt | Returned inline in a fenced `xml` block; not saved unless requested |
+| Drafted prompt written to file | Operator-designated file path (draft flow's file-write option only); a plain file write, not a registry entry |
 | Retrieved prompt content | Existing saved prompt, returned with its metadata |
 | Prompt-not-found or ambiguous-slug report | Lists available prompts, offers to draft or create |
 | New or updated prompt file | `registry/prompts/<category>/<slug>.md` (save/create flows only) |
@@ -55,7 +57,7 @@ If a ContextOS MCP server is configured for this vault, the creation flow (Step 
 
 ### Step 1: detect trigger type
 
-- `/prompt draft <description>` → **draft flow** (Step 2).
+- `/prompt draft <description>` → **draft flow** (Step 2). If the trigger has a trailing `to <file-path>` clause, extract `<file-path>` as the destination and strip it from the description before drafting.
 - `/prompt create <slug> [in <category>]` → **creation flow** (Step 3).
 - `/prompt list [<category>]` → **list flow** (Step 4).
 - `/prompt <slug>` (no other keyword) → **retrieval flow** (Step 5).
@@ -92,13 +94,20 @@ Build a new prompt from the description, following `registry/prompts/framework.m
 5. If a section cannot be filled confidently from the description or vault context, insert an explicit bracketed placeholder (e.g. `[recipient name]`) rather than inventing a plausible-sounding detail, and list every such placeholder in the reply below the prompt.
 6. **Self-check against framework** using the principles table in `registry/prompts/framework.md` before returning. Tighten any section that fails a principle.
 7. Return the prompt in a fenced ```xml``` block. Below it, note in one or two lines what vault context informed the draft, and list any unresolved placeholders.
-8. Use `AskUserQuestion` to ask whether to save the draft, with the existing category folders from `registry/prompts/index.md` as options plus "new category" and "don't save" — do not assume it should be saved, and do not assume which category fits. If a category is chosen, ask a follow-up for the slug (free text). If "don't save" or no response, stop here. Otherwise continue to Step 3 using the drafted content as the body (skip the interview questions already answered by the draft).
+8. Determine the destination:
+   - If the trigger already carried a `to <file-path>` clause (Step 1), skip straight to the file-write branch below.
+   - Otherwise use `AskUserQuestion` to ask whether to save the draft, with the existing category folders from `registry/prompts/index.md` as options plus "write to a file", "new category", and "don't save" — do not assume it should be saved, and do not assume which category fits.
+   - If a category is chosen, ask a follow-up for the slug (free text), then continue to Step 3 using the drafted content as the body (skip the interview questions already answered by the draft).
+   - If "don't save" or no response, stop here.
+   - If "write to a file" was chosen without a path already given, ask `AskUserQuestion` free text: `"File path: where should the drafted prompt be written?"`
+9. **File-write branch.** Resolve the path (an absolute path is used as-is; a relative path resolves against the vault root). If a file already exists at that path, confirm via `AskUserQuestion` (overwrite / choose a different path / cancel) before writing — never overwrite silently. Write the `<context>...<verify>` block from Step 7 to the file, without the surrounding fence, using `Write` (or `mcp__contextos__fs_write_file` when MCP is available per the MCP-awareness note above). This is a plain file write, not a registry entry: do not add frontmatter, do not update any `index.md`, and do not append a daily log entry — the file will not appear in `prompt list` or resolve via `prompt <slug>`. Confirm to the operator:
+   > "Draft written to `<file-path>`."
 
 ---
 
 ### Step 3: creation flow
 
-Used standalone (`/prompt create <slug> in <category>`) or as the save step after a draft (Step 2.8). Every prompt this flow writes is structured against `registry/prompts/framework.md`'s KERNEL+V sections, whether it arrives as a draft, as pasted content, or built up through the interview — never saved as unstructured free text.
+Used standalone (`/prompt create <slug> in <category>`) or as the save step after a draft (Step 2, destination sub-step). Every prompt this flow writes is structured against `registry/prompts/framework.md`'s KERNEL+V sections, whether it arrives as a draft, as pasted content, or built up through the interview — never saved as unstructured free text.
 
 1. Read `memory/operating/vault-conduct.md` and `registry/prompts/framework.md`.
 2. Resolve the category with `AskUserQuestion`: options are the existing category folders (`writing`, `analysis`, `planning`, `learning`, `deciding`, `general`) from `registry/prompts/index.md`, plus a "new category" option. Do not assume `general/` or infer a category from the slug; ask, unless the trigger already stated one explicitly (`/prompt create <slug> in <category>`).
@@ -144,9 +153,9 @@ Used standalone (`/prompt create <slug> in <category>`) or as the save step afte
 ## Invariants
 
 - Drafting and retrieval never "activate" a prompt the way `/role`/`/hat` activate a posture. The output is always returned to the operator, not applied silently.
-- A draft is never saved to the registry without explicit operator confirmation of category and slug, obtained via `AskUserQuestion`.
+- A draft is never saved to the registry without explicit operator confirmation of category and slug, obtained via `AskUserQuestion`. A draft written to an operator-designated file is a plain file write, not a registry entry, and is never overwritten silently — confirm via `AskUserQuestion` if the destination already exists.
 - Ground drafts in real vault context retrieved via `vault query`. Do not invent facts about entities, audiences, or the operator to fill a section; use a bracketed placeholder and flag it instead.
 - Only reference roles and hats that exist in `registry/roles/` and `registry/hats/`. Never invent one to make a draft look more complete. If more than one is plausible, ask via `AskUserQuestion` instead of picking one.
 - Every drafted or created prompt is structured against, and checked against, the KERNEL+V sections and principles in `framework.md` before it is returned or written — in both the `draft` and `create` flows. Never save unstructured free text as a prompt.
 - Never assume a default at a decision point covered above (category, overwrite, role/hat inclusion, an unresolved KERNEL+V section, whether to save). Use `AskUserQuestion` instead of guessing.
-- Creation and save flows write only the target prompt file and its category index. No other files, except the daily log entry.
+- Creation and registry save flows write only the target prompt file and its category index. No other files, except the daily log entry. The draft flow's file-write branch writes only the single operator-designated file: no frontmatter, no index update, and no daily log entry, since it is not a registry entry.
