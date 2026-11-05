@@ -29,7 +29,7 @@ High-fidelity extraction and structuring of conversational transcripts (mastercl
 
 ### Step 1: pre-flight
 
-1. If no transcript was provided (a bare `vault distil-transcript` with nothing to process — not uploaded in this session and not found in `inbox/`), ask the operator to paste the transcript, upload it, or place it in `inbox/`, then wait for a response rather than stopping silently.
+1. If no transcript was provided (a bare `vault distil-transcript` with nothing to process; not uploaded in this session and not found in `inbox/`), ask the operator to paste the transcript, upload it, or place it in `inbox/`, then wait for a response rather than stopping silently.
 2. Read `memory/operating/vault-conduct.md`.
 3. Confirm the source is a conversational transcript (not a document or export; those go through `/vault ingest` directly).
 4. Identify: format (video transcript, audio transcript, structured Q&A, etc.), speaker(s), and date if available.
@@ -37,6 +37,8 @@ High-fidelity extraction and structuring of conversational transcripts (mastercl
 ### Step 2: profile the file
 
 Before reading any content, run a profiling pass to pick a safe reading strategy. Some transcript exports (raw JSON, SRT-style captions collapsed to one line, etc.) contain pathologically long lines that the `Read` tool will truncate if read naively. This must happen before any `Read` tool call on the transcript.
+
+`$FILE` is the transcript's absolute path. For a file in the vault, that is the vault's `path` from `vault_info` joined with its vault-relative path. These commands only read; the extract is still written through ContextOS MCP. If this session's shell cannot reach the file, read it with `mcp__contextos__fs_read_text_file` instead, reading in byte parts instead of successive `range` parts: pass `offset` (from 0) and `length`, keep the first part's `version` and pass it as `expected_version` on every later part, and continue from each part's `next_offset` until it is -1. A part is read by seeking, so a transcript with very long lines is read completely. If a part fails with `io/conflict` the file changed: start again from the beginning.
 
 ```bash
 wc -l -c "$FILE"
@@ -47,9 +49,9 @@ Interpret the output and select a reading mode:
 
 | Condition | Reading mode |
 | --- | --- |
-| Lines ≥ 20 and max line < 50,000 chars | **Normal** — `Read` the file in one pass |
-| Lines < 5 and max line ≥ 50,000 chars | **Chunked** — file is a blob; use `awk` to extract 8,000-char windows |
-| Lines ≥ 5 and max line ≥ 50,000 chars | **Hybrid** — read short lines normally; extract oversized lines in chunks |
+| Lines ≥ 20 and max line < 50,000 chars | **Normal**: `Read` the file in one pass |
+| Lines < 5 and max line ≥ 50,000 chars | **Chunked**: file is a blob; use `awk` to extract 8,000-char windows |
+| Lines ≥ 5 and max line ≥ 50,000 chars | **Hybrid**: read short lines normally; extract oversized lines in chunks |
 | File not found or unreadable | Stop and ask the operator for the correct path before proceeding |
 
 Record the chosen mode; note it in `## Open questions` if chunked or hybrid reading was required, since partial-window extraction risks missing context at window boundaries.
@@ -70,7 +72,7 @@ Record the chosen mode; note it in `## Open questions` if chunked or hybrid read
 
 Extract the transcript into a structured Markdown document. Completeness is the primary goal. Preserve the speaker's language and specific examples; do not paraphrase into summaries.
 
-Check whether `templates/distil-transcript.md` exists in the vault. If it does, read it and use its frontmatter and section structure as the template. If it does not exist, use the fallback structure below. Write to `memory/raw/YYYY/MM/YYYY-MM-DD-<slug>.md`. If MCP is available (see the vault router's MCP awareness section), prefer `mcp__contextos__fs_write_file` with the composed content; otherwise use the `Write` tool directly.
+Check whether `templates/distil-transcript.md` exists in the vault. If it does, read it and use its frontmatter and section structure as the template. If it does not exist, use the fallback structure below. Write it with `mcp__contextos__note_create` to `<vault>://memory/raw/YYYY/MM/YYYY-MM-DD-<slug>.md`, passing the frontmatter as structured fields.
 
 ```markdown
 ---

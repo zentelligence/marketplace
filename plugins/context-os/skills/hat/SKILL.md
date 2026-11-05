@@ -1,6 +1,6 @@
 ---
 name: hat
-description: "Loads a task-phase hat definition from `registry/hats/` in the vault registry and activates its thinking mode, method, tool constraints, and output format for the current task, or authors a new one. Fires only on the explicit inline trigger `<slug>:hat` appearing anywhere in a prompt (e.g. 'Wearing the critic:hat, evaluate this draft.', 'As architect:role, wearing the solver:hat, propose three solutions.'), or the explicit command `hat create <slug>` / `/hat create <slug>` to define a new hat. Composes with an active `<slug>:role` (role shapes identity, hat shapes method) but does not require one. Does not fire for `<slug>:role` or `<slug>:agent` (owned by the sibling role and agent skills), for `prompt draft/create/list` (owned by the prompt skill), or for `/vault <command>` and vault-content requests (owned by the vault skill). Does not infer or auto-activate a hat from task phrasing or method requests alone ('be more critical', 'think step by step') without the literal `:hat` suffix naming a registry slug."
+description: "Loads a task-phase hat definition from `registry/hats/` in the vault registry and activates its thinking mode, method, tool constraints, and output format for the current task, or authors a new one. Fires only on the explicit inline trigger `SLUG:hat` appearing anywhere in a prompt (e.g. 'Wearing the critic:hat, evaluate this draft.', 'As architect:role, wearing the solver:hat, propose three solutions.'), or the explicit command `hat create SLUG` / `/hat create SLUG` to define a new hat. Composes with an active `SLUG:role` (role shapes identity, hat shapes method) but does not require one. Does not fire for `SLUG:role` or `SLUG:agent` (owned by the sibling role and agent skills), for `prompt draft/create/list` (owned by the prompt skill), or for `/vault COMMAND` and vault-content requests (owned by the vault skill). Does not infer or auto-activate a hat from task phrasing or method requests alone ('be more critical', 'think step by step') without the literal `:hat` suffix naming a registry slug."
 license: Apache-2.0
 user-invocable: true
 disable-model-invocation: false
@@ -14,9 +14,9 @@ Loads a hat definition from `registry/hats/` and activates its thinking mode, me
 
 ---
 
-## MCP awareness
+## ContextOS MCP
 
-If a ContextOS MCP server is configured for this vault, the creation flow (Step 4) prefers its tools over the harness's raw `Write`/`Edit`, falling back automatically if MCP is unavailable. Check once per invocation: attempt `mcp__contextos__vault_info`; if it succeeds, prefer the named MCP tools per step below, falling back to `Write`/`Edit` only if a specific call errors. If `vault_info` is unavailable or errors, use `Write`/`Edit` throughout.
+This skill reads and writes the vault only through ContextOS MCP. Before the first lookup, follow steps 1 and 4 of the vault router's [Before any command](../vault/SKILL.md#before-any-command) section: confirm the server with `mcp__contextos__vault_info`, which also gives the vault order. A lookup searches every vault in that order and takes the first definition found, as [Resolving a registry slug](../vault/SKILL.md#resolving-a-registry-slug) sets out; only creation asks the operator to choose a vault (step 2). If the server is unavailable, report it and stop; never fall back to the host's own file tools. Paths below are addressed as `<vault>://...`.
 
 ---
 
@@ -26,7 +26,7 @@ If a ContextOS MCP server is configured for this vault, the creation flow (Step 
 | --- | --- | --- |
 | Hat slug | Inline `<slug>:hat` or `/hat create <slug>` | Yes |
 | `registry/hats/<slug>.md` | Vault registry | For activation |
-| `registry/hats/index.md` | Vault registry | For available-hats listing |
+| `registry/hats/` | Vault registry | For available-hats listing: the `.md` files in the folder, never its server-managed `index.md` |
 | `memory/operating/vault-conduct.md` | Vault | For creation flow only |
 
 ---
@@ -52,16 +52,7 @@ Detect the trigger type:
 - `<slug>:hat` in a larger prompt → **activation flow** (Steps 2-3).
 - `/hat create <slug>` as a standalone command → **creation flow** (Step 4).
 
-Run the lookup for either trigger:
-
-```bash
-session-start >/dev/null 2>&1
-source "${TMPDIR:-/tmp}/plugin-data.env" 2>/dev/null
-python $CONTEXT_OS_PLUGIN_ROOT/scripts/registry_lookup.py \
-  --vault-root . \
-  --type hat \
-  --slug "<slug>"
-```
+Resolve the slug through ContextOS MCP in configured vault order, as [Resolving a registry slug](../vault/SKILL.md#resolving-a-registry-slug) sets out: in each vault from `vault_info`, `<vault>://registry/hats/<slug>.md`, then `<vault>://registry/hats/<slug>/SKILL.md`, first found wins. The full `<vault>://` path found is the definition's `file` (`found` is true). If no vault has it, `found` is false: `available` is the hat slugs across all vaults, each once, with the vault that would supply it. Never prefer the active vault over this order, and never use the host's own file tools.
 
 ### Step 2: activation - hat found
 
@@ -79,7 +70,7 @@ If `found` is true:
 If `found` is false:
 
 1. Report to the operator:
-   > "No hat definition found for `<slug>`. Available hats: [list from `available`, or 'none yet'].
+   > "No hat definition found for `<slug>`. Available hats: [list from `available`, each slug once with the vault that supplies it, or 'none yet'].
    > Run `/hat create <slug>` to define a new one, or continue without a hat."
 2. Ask whether to proceed without a hat, use the closest available one, or create a new one.
 
@@ -87,8 +78,8 @@ If `found` is false:
 
 When the operator requests `/hat create <slug>`:
 
-1. Read `memory/operating/vault-conduct.md`.
-2. Check whether `registry/hats/<slug>.md` already exists. If so, confirm before overwriting.
+1. Choose the vault to write to (see step 2 below), then read that vault's `memory/operating/vault-conduct.md`.
+2. Choose the vault to write to (step 2 of the vault router's Before any command; the operator's choice, never assumed). Resolve `<slug>` across all vaults in `vault_info` order as in Step 1. If it exists in the chosen vault, confirm before overwriting. If an earlier vault than the chosen one already defines it, warn the operator that the earlier vault's definition wins every lookup, so the new one would be shadowed, and ask whether to continue, choose another slug, or choose another vault.
 3. Interview the operator sequentially (wait for each answer):
    - `"Display name: full display name for this hat? (e.g. 'Critic', 'Refiner', 'Solver')"`
    - `"Description: one sentence on what this hat does."`
@@ -97,12 +88,9 @@ When the operator requests `/hat create <slug>`:
    - `"Method: numbered procedure this hat follows step by step."`
    - `"Output format: what sections must every response in this hat include?"`
    - `"Constraints: what must this hat never do? (e.g. 'Do not propose solutions.', 'Do not soften findings.')"`
-4. Check whether `templates/registry-hat.md` exists in the vault. If it does, read it and use its content as the template, substituting the interview answers from Step 3 into its placeholders by matching section headings. If the custom template contains a section this skill has no interview answer for, leave its placeholder in place and flag it to the operator in the confirmation message (Step 7) rather than inventing content. If `templates/registry-hat.md` does not exist, use the fallback template below verbatim. Write `registry/hats/<slug>.md` with the resulting content. If MCP is available, prefer `mcp__contextos__note_create` with `frontmatter: {name: "<Display Name> Hat", description: "<one-line description>"}` and `content` set to everything from `# Hat: <Display Name>` onward; otherwise use the `Write` tool directly.
-5. Add a row to `registry/hats/index.md`: `| [<Display Name>](<slug>.md) | <slug> | <one-line description> |` If MCP is available, prefer `mcp__contextos__fs_edit_file` anchored on the table's last existing row; otherwise use the `Edit` tool.
-6. Append to the daily log. If MCP is available, call `mcp__contextos__vault_log_append` with `entry: "hat create | Created hat definition: <slug>"` and `files: ["registry/hats/<slug>.md"]`. Otherwise, append to `memory/log/YYYY/MM/YYYY-MM-DD.md`:
-   ```
-   HH:MM | agent | hat create | Created hat definition: <slug> | files: registry/hats/<slug>.md
-   ```
+4. Check whether `templates/registry-hat.md` exists in the vault. If it does, read it and use its content as the template, substituting the interview answers from Step 3 into its placeholders by matching section headings. If the custom template contains a section this skill has no interview answer for, leave its placeholder in place and flag it to the operator in the confirmation message (Step 7) rather than inventing content. If `templates/registry-hat.md` does not exist, use the fallback template below verbatim. Write `registry/hats/<slug>.md` with `mcp__contextos__note_create`, passing `frontmatter: {name: "<Display Name> Hat", description: "<one-line description>"}` and `content` set to everything from `# Hat: <Display Name>` onward.
+5. Leave `registry/hats/index.md` alone: the ContextOS MCP server lists the new file in it, with its frontmatter `description` as the summary.
+6. Add a log summary: call `mcp__contextos__vault_log_append` with `entry: "hat create | Created hat definition: <slug>"` and `files: ["registry/hats/<slug>.md"]`.
 7. Confirm to the operator:
    > "Hat `<slug>` created at `registry/hats/<slug>.md`. Use `<slug>:hat` in any future prompt to activate it."
 
@@ -153,8 +141,8 @@ Tool restrictions in a hat file are hard behavioural constraints. When a hat dec
 
 | Hat declares | Permitted in this task |
 | --- | --- |
-| `read-only` | `Read`, non-destructive `Bash` (ls, cat, grep, find). No `Write`, `Edit`, or state-modifying commands. |
-| `read+write` | `Read`, `Write`, `Edit`, `Bash` (all). |
+| `read-only` | Tools that only read: ContextOS MCP reads and searches, the host's file reads, and non-destructive shell commands (ls, cat, grep, find). No tool that writes, moves, or deletes, in the vault or elsewhere. |
+| `read+write` | Reads plus writes: ContextOS MCP writes for vault content, and the host's file and shell tools outside the vault. |
 | `all` | All tools unrestricted. |
 | `none` | Operate from current context only. No tool calls. |
 
@@ -173,4 +161,4 @@ Do not silently bypass the hat's tool restriction.
 - Tool restrictions from the hat file are binding for the duration of that task.
 - When role and hat are both active: role shapes identity, hat shapes method. They compose.
 - Never invent hat content. If a slug is not found, report it and ask.
-- Creation writes only `registry/hats/<slug>.md` and updates `registry/hats/index.md`. No other files.
+- Creation writes only `registry/hats/<slug>.md`. No other files, and never an `index.md`.

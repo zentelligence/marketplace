@@ -8,9 +8,9 @@ First-run skill. Scaffolds the complete vault directory structure from the schem
 
 Two modes:
 - **Full** (default): the complete guided interview, Phases A to G, roughly 10 to 15 minutes.
-- **Quick**: a handful of questions, about 2 minutes, that produces a working `CLAUDE.md` and global instructions block today. Everything the quick pass doesn't ask about is written as an explicit "not yet captured" stub rather than skipped silently, so a later `/vault init` re-run has clear gaps to fill.
+- **Quick**: a handful of questions, about 2 minutes, that produces a working vault with its instructions file today. Everything the quick pass doesn't ask about is written as an explicit "not yet captured" stub rather than skipped silently, so a later `/vault init` re-run has clear gaps to fill.
 
-Idempotent: existing files are never overwritten by the scaffold step. The build-out always writes content to section-stub files regardless of prior state, so `/vault init` can be re-run to complete an interrupted build-out, or to upgrade a quick pass to the full walkthrough.
+Resumable: an interrupted init, or a quick pass, is completed by running `/vault init` again. Each run works out what is already captured, per file and per section, and asks only about what is not. Captured content is never replaced unless the operator asks to revise that specific section.
 
 ---
 
@@ -23,62 +23,68 @@ Idempotent: existing files are never overwritten by the scaffold step. The build
 | `memory/entities/personal.md` | Social profiles, technology subscriptions | B | Location only; rest stubbed |
 | `memory/operating/rhythm.md` | Horizon names, planning scope, and status taxonomy (operator-defined) | C | Left as the shipped Macro/Meso/Micro default |
 | `memory/operating/current-priorities.md` | Current-period outcomes and non-negotiables per horizon | C | One-line focus prepended if given; shipped default otherwise left as-is |
-| `memory/entities/index.md` | Entity registry (updated with real entity names) | D | Written from personal, family (if separate), and named businesses |
-| `memory/index.md` | Memory master index (updated with real entity names) | D | Written from personal, family (if separate), and named businesses |
 | `memory/operating/autonomy-policy.md` | What the agent may and may not do without sign-off | E | Gated section only; rest stubbed |
+| `memory/identity/communication-style.md` | How to communicate with the operator: language, register, structure, scope, defaults, and personality blend | E | Left as the scaffolded stub |
 | `memory/operating/anti-patterns.md` | Execution, content, and conversational patterns to avoid | E | Left as the scaffolded stub |
 | `memory/identity/voice-profile.md` | Audiences, messaging themes, examples, discrimination rule | F (optional) | Left as the scaffolded stub |
-| `memory/operating/global-instructions.md` | Comprehensive, self-contained Cowork paste block: structure, tone, autonomy, anti-patterns, priorities | G | Generated, with skipped sections marked explicitly |
-| `CLAUDE.md` | Copied from `scaffold/COWORK.md`, then `{{OperatorName}}` replaced with operator's first name | G | Same as full mode |
+| `AGENTS.md` | Vault instructions, seeded from `workflows/vault/templates/seeded/AGENTS.md`; `{{OperatorName}}` and the language conventions are set here | G | Same as full mode |
+| `CLAUDE.md` | One-line `@AGENTS.md` import, so Claude Code and Codex read the same instructions | Scaffolded | Same as full mode |
+| `registry/instructions/global.md` | The operator's orientation, seeded from `workflows/vault/templates/seeded/registry/instructions/global.md`, which ContextOS MCP places in every Claude Code and Codex session: the full operator profile from every phase, one XML-tagged section each, condensed with a pointer to the file holding the detail | G | Name, location, entities, focus, sign-off, and team from Q1 to Q7; the rest marked not yet captured |
+| `registry/agents/<slug>.md` (six) | The team members: chief of staff, librarian, technologist, support, communications, and assurance, from the shipped member templates | A (names), G (created) | Default names unless the operator changes them |
+| `.contextos/team.toml` | The team declaration: the operator as human member, and the six members, the chief of staff flagged | G | Same as full mode |
 
 ---
 
 ## Conduct rules
 
 - Read `memory/operating/vault-conduct.md` before writing any file.
+- Write every file through ContextOS MCP, never with the host's own file tools. Replace a scaffolded stub with `mcp__contextos__note_update` (the body, plus a frontmatter patch where the template has one), carrying the hash from your read; create a file that does not exist yet with `mcp__contextos__note_create`.
 - Do not run on a vault that already has real content in critical personalisation files without operator confirmation.
 - The scaffold step is strictly additive: create if absent, skip if present.
 - The build-out step writes all files only after the relevant phase is complete.
+- Never replace captured content. A file still holding its scaffolded stub is written whole; in a file that is partly captured, replace only the sections that read `Not yet captured`, with `mcp__contextos__fs_edit_file`, and leave every other section as it is. No marker anywhere authorises overwriting captured content.
 - Log after all writes are complete.
 - Any question asking the operator to name a pattern, rule, throughline, or theme about themselves must first ask for one or two concrete instances, and must explicitly allow "nothing yet" as a valid answer. Never ask for the abstraction  directly. Schema vocabulary (entity, autonomy policy, anti-pattern, and so on) is introduced as a label after the operator has answered in plain language, never as the term the question is asked in.
 - Quick mode never invents an answer for a question it didn't ask. Every field it skips is written as an explicit "not yet captured" stub, never a fabricated default, except the one safe conservative default named in Step 2Q (autonomy gated).
+- Never leave a heading with nothing under it (`memory/operating/vault-conduct.md`). Under a section the operator was not asked about, write ``_Not yet captured. Run `/vault init` again to complete this section._``; under a section the operator was asked about and had nothing for, write `_None recorded._`. Where a template below says to omit a section, drop its heading too.
 
 ---
 
 ## Step 1: pre-flight
 
+The vault router has already confirmed ContextOS MCP and chosen the vault. Set `<vault>` to that vault's configured `name` from `vault_info`; the vault package's runs take it as their `vault` input.
+
 1. If `memory/operating/vault-conduct.md` already exists (an existing or partially-initialised vault), read it now. A brand-new vault won't have it yet: the scaffold step (Step 2) is what creates it, so on a first-ever run, read it immediately after Step 2 completes, before writing anything else.
 2. Determine `init_mode`. If the router already resolved `args.mode` to `quick` (the operator said "vault init quick", "quick init", or similar), set `init_mode = quick` and skip the question below. Otherwise ask:
-   > "Two ways to do this: a full walkthrough (10 to 15 minutes, covers identity, entities, planning, autonomy, and voice), or a quick pass (a handful of questions, about 2 minutes) that gets the vault working today and leaves the rest as placeholders you can fill in anytime by running `/vault init` again. Which would you like?"
+   > "Two ways to do this: a full walkthrough (10 to 15 minutes, covers identity, entities, planning, autonomy, communication style, and voice), or a quick pass (a handful of questions, about 2 minutes) that gets the vault working today and leaves the rest as placeholders you can fill in anytime by running `/vault init` again. Which would you like?"
    Store as `init_mode` (`quick` or `full`).
-3. Check whether the vault has already been initialised by inspecting `memory/identity/identity.md`.
-   - If it contains the marker text "Quick init: run `/vault init` again", a quick pass is already on file. Tell the operator briefly (e.g. "This vault has a quick init from before; continuing will fill in the rest.") and proceed directly into the chosen mode's build-out. No overwrite confirmation is needed: a quick init is incomplete by definition.
-   - Otherwise, if it contains other real content (not section stubs), warn the operator and ask for confirmation before proceeding.
-4. Confirm the vault's absolute path. Ask:
-   > "What is the absolute path to this vault on your machine? (e.g. `/home/name/vault`
-   > or `C:\Users\Name\Obsidian\MyVault`)"
-   Store as `vault_path`.
+3. Work out what is already captured. Read each critical personalisation file in the table above that exists:
+   - A file that is absent, or still holds only its scaffolded stub (headings with nothing under any of them, or a line saying to run `/vault init` to populate it), is not captured: its phase runs.
+   - A section reading `_Not yet captured..._` is not captured: its phase asks only for that section.
+   - Anything else is captured, and is kept. A section reading `_None recorded._`, or an empty section in a file that has other content, was left empty on purpose, so it is not asked again.
+   - The team is captured when `.contextos/team.toml` lists members; the naming question is then skipped.
+   Tell the operator briefly which phases are already complete and which remain (for example: "Identity and planning are done; entities, autonomy, and voice are still open."), then run only the remaining phases in the chosen mode. If the operator asks to revise something already captured, confirm which section, show what will change, and replace only that section.
 
 ---
 
 ## Step 2: scaffold directory structure
 
-Run the scaffold script to create all required directories and stub files. This step always runs as a script: its idempotent, interview-driven scaffolding logic has no MCP equivalent.
+Run the vault package's `scaffold` workflow, following [package.md](package.md): install the plugin's release, register the `scaffold` job, then run it with the chosen vault and the current time:
 
 ```bash
-session-start >/dev/null 2>&1
-source "${TMPDIR:-/tmp}/plugin-data.env" 2>/dev/null
-python $CONTEXT_OS_PLUGIN_ROOT/scripts/vault_scaffold.py --vault-root <vault_path>
+contextos-web jobs run --shared contextos-vault scaffold scaffold --format json --input vault=<vault> --input 'created_at="<now>"'
 ```
 
-The script is idempotent: existing files are not overwritten. In addition to creating directory structure and stub indexes, it seeds the vault with plugin-provided files:
+The workflow is strictly additive: a file that already exists is never replaced, so a re-run carries on where an interrupted one stopped. It creates every file the vault does not yet have:
 
-- `registry/` — KERNEL+V prompt framework, category sub-folders, and role and skills indexes
-- `templates/` — Obsidian Templater templates (daily journal, unique note)
-- `memory/designs/` — design rationale documents
-- `scripts/utility/` — backup scripts for macOS and Windows
+- `AGENTS.md` and `CLAUDE.md`: the vault's instructions and the one-line import that points Claude Code at them
+- `registry/instructions/global.md`: the operator's orientation, which the ContextOS MCP server places in a marked block in each agent host's global instructions (`~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`)
+- `registry/`: the KERNEL+V prompt framework, category sub-folders, the V-sequence roles and hats, and every registry index
+- `templates/`: Obsidian Templater templates, the task templates, and the team-member templates
+- `memory/`: the operating files, the task and decision registers with their id sidecars, the design rationale documents, and a stub for every personalisation file this skill fills in
+- `registry/scripts/utility/`: backup scripts for macOS and Windows
 
-Review the output to confirm what was created or skipped.
+Report the summary's `outputs.result`: how many folders and files were created, how many files were skipped, and any `errors`. Every write went through ContextOS MCP, so the indexes, the operation log, and Git are already current.
 
 If Step 1.1 didn't already read `memory/operating/vault-conduct.md` (a brand-new vault, just scaffolded above), read it now, before writing anything else.
 
@@ -101,6 +107,8 @@ Runs instead of Steps 3 to 8. Ask each question below in turn and move on regard
 **Q5:** `"Anything you're focused on right now worth recording? (optional, one line)"` Store as `quick_priority`.
 
 **Q6:** `"Anything that should always require your sign-off before I send, publish, or finalise it? (optional, one line)"` Store as `quick_gated`. If skipped, default `quick_gated` to: "Not yet defined: treat anything external-facing, financial, or irreversible as requiring sign-off until this is captured."
+
+**Q7:** `"Your vault comes with a team of six AI members who take on work through your task list: Ellis (chief of staff), Wren (librarian), Arlo (technologist), Noor (support), Juno (communications), and Tess (assurance). Keep these names, or would you like to rename any of them?"` If they keep them, store the defaults as `member_names`. Only if they want changes, ask for each new name, and store the result. Skip this question when the team already exists (Step 1.3).
 
 **Write quick-mode files:**
 
@@ -136,7 +144,7 @@ Quick init: run `/vault init` again to complete the full build-out.
 _Roles, backstory, and current goals not yet captured. Run `/vault init` again to complete this section._
 ```
 
-`memory/entities/personal.md`: as in Step 4, using only `location`; leave the Social Profiles and Technology Subscriptions section bodies empty. If `family_mode` is `folded`, add one line under Notes: "Family is tracked here, not as a separate entity." If `family_mode` is `separate`, add: "See [family](family.md) for family-specific content."
+`memory/entities/personal.md`: as in Step 4, using only `location`; write the not yet captured line under Social profiles and Technology subscriptions. If `family_mode` is `folded`, write one line under Notes: "Family is tracked here, not as a separate entity." If `family_mode` is `separate`, add: "See [family](family.md) for family-specific content."
 
 **Entities to scaffold**, always including "personal" (handled above, not through the loop below) plus:
 - `family`, only if `family_mode` is `separate`.
@@ -144,12 +152,13 @@ _Roles, backstory, and current goals not yet captured. Run `/vault init` again t
 
 For each of these (family and each named business):
 1. Derive slug: lowercase-hyphenated, as in Step 6.
-2. Run the scaffold script with entity args, as in Step 6.2.
+2. Run the `scaffold` job with the entity, as in Step 6.2.
 3. Write `memory/entities/<slug>.md`:
    - For `family`: entity type `family`, opening line "Family entity. Detail not yet captured. Run `/vault init` again to complete this section."
    - For a business: entity type `business`, opening line "[role] role." if a role was given, otherwise "Role not provided.", followed on the next line by "Detail not yet captured. Run `/vault init` again to complete this section."
-   - Leave People, Active Initiatives, Offers, and Key Accounts and Tools section bodies empty in both cases.
-4. Rewrite `memory/entities/index.md` and `memory/index.md` as in Step 6.4 to 6.5, listing personal, family (if separate), and every named business.
+   - Write the not yet captured line under People, Active initiatives, and Key accounts and tools, and, for a business, Offers. A family entity has no Offers section.
+   - Under Related, link the entity folder as `[<slug>/](../../<slug>/index.md)`.
+4. Leave `memory/entities/index.md` and `memory/index.md` alone: the ContextOS MCP server lists each entity's profile and folder in them.
 
 Leave `memory/operating/rhythm.md` as its shipped Macro/Meso/Micro default; it is a genuine starting structure, not a blank stub, and the full walkthrough is what personalises it.
 
@@ -182,7 +191,7 @@ _Not yet captured. Run `/vault init` again to complete this section._
 
 Leave `memory/operating/anti-patterns.md` and `memory/identity/voice-profile.md` as the scaffolded stubs; do not write to them in quick mode.
 
-Continue to Step 9. In its `<operator_operating_model>` and `<operator_current_priorities>` sections, use personal plus family (if separate) plus the named businesses for the entities summary, and note that `rhythm.md` is still the shipped Macro/Meso/Micro default (not yet personalised) with `quick_priority` (or "not yet captured" if it was skipped) as the only real current-priorities content; there are no non-negotiables to report. Treat `language_convention`, the detailed Phase D fields (`entity_people`, `entity_initiatives`, `entity_offers`, `entity_tools`), the detailed Phase E fields (`autonomy_open`, `sensitive_categories`, `ap_language`, `ap_structure`, `ap_reasoning`, `ap_advice`, `ap_content`), and all of Phase F as skipped throughout the rest of Step 9, per its existing instruction to say so explicitly rather than omit silently.
+Continue to Step 9, leaving `language_convention` at the shipped default; the detail this pass did not ask about stays as the explicit `not yet captured` stubs written above.
 
 ---
 
@@ -201,6 +210,8 @@ For each entity named:
 After listing all entities: `"How do these entities relate to each other? Note any where decisions in one affect another (for example, personal finances affecting a business initiative, or family commitments affecting work capacity)."`
 
 Store the complete list as `entity_map`. No files are written at this step. The entity map contextualises every phase that follows.
+
+Then introduce the team, unless it already exists (Step 1.3): `"Alongside you, the vault has a small team of AI members who pick up work through your task list. Each owns one area: a chief of staff who triages and routes everything, a librarian who looks after what the vault knows, a technologist who builds and fixes the vault's tools and automations, support for day-to-day admin and follow-through, communications for anything outbound, drafted for your approval, and assurance for independently checking substantial work. They come named Ellis, Wren, Arlo, Noor, Juno, and Tess. Keep those names, or rename any of them?"` Store the chosen names as `member_names`, keyed by function. A name may not be the operator's own; if one is, ask again.
 
 ---
 
@@ -246,7 +257,7 @@ Ask each question individually and wait for the answer before proceeding. Presen
 
 ## Interests
 
-[if provided; otherwise omit section body]
+[if provided; otherwise `_None recorded._`]
 ```
 
 `memory/identity/who-am-i.md`:
@@ -263,7 +274,7 @@ Ask each question individually and wait for the answer before proceeding. Presen
 
 ## Throughline
 
-[throughline, or omit section body if not yet defined]
+[throughline, or `_None recorded._` if not yet defined]
 
 ## Current goals
 
@@ -275,7 +286,7 @@ Ask each question individually and wait for the answer before proceeding. Presen
 
 ## Friction points
 
-[friction_points if provided; otherwise omit section body]
+[friction_points if provided; otherwise `_None recorded._`]
 ```
 
 `memory/entities/personal.md`:
@@ -286,18 +297,20 @@ Ask each question individually and wait for the answer before proceeding. Presen
 
 ## Social profiles
 
-[social_profiles as bullet list, or omit section body if none provided]
+[social_profiles as bullet list, or `_None recorded._` if none provided]
 
 ## Technology subscriptions
 
-[tech_subscriptions as bullet list, or omit section body if none provided]
+[tech_subscriptions as bullet list, or `_None recorded._` if none provided]
 
 ## Notes
+
+[anything else worth recording about the personal entity, or `_None recorded._`]
 
 ## Related
 
 - [../identity/identity.md](../identity/identity.md)
-- [personal/](personal/index.md)
+- [personal/](../../personal/index.md)
 ```
 
 ---
@@ -341,7 +354,7 @@ What's actually being pursued right now lives in `current-priorities.md`.
 
 ## Status taxonomy
 
-[status_taxonomy as bullet list, or omit section body if not provided]
+[status_taxonomy as bullet list, or `_None recorded._` if not provided]
 ```
 
 `memory/operating/current-priorities.md`: current-period content, updated far more often than `rhythm.md`. Use the operator's horizon names as top-level headings, matching `rhythm.md`.
@@ -400,9 +413,9 @@ For business entities only (skip for personal and family): `"What are the curren
 
 For each entity:
 1. Derive slug: lowercase-hyphenated (e.g. "Zentelligence" → `zentelligence`).
-2. Run scaffold script with entity args:
+2. Run the `scaffold` job again (see [package.md](package.md), Step 4) with the entity added, which creates the `<slug>/` folder and `memory/entities/<slug>.md` if they are missing and leaves everything else as it is:
    ```bash
-   python scripts/vault_scaffold.py --vault-root <vault_path> --entity-slug <slug> --entity-name "<name>"
+   contextos-web jobs run --shared contextos-vault scaffold scaffold --format json --input vault=<vault> --input 'created_at="<now>"' --input entity_slug=<slug> --input 'entity_name=<name>'
    ```
 3. Overwrite `memory/entities/<slug>.md` with actual content:
    ```markdown
@@ -412,7 +425,7 @@ For each entity:
 
    ## People
 
-   [entity_people as bullet list, or omit if sole operator]
+   [entity_people as bullet list, or omit the section if sole operator]
 
    ## Active initiatives
 
@@ -420,24 +433,23 @@ For each entity:
 
    ## Offers
 
-   [entity_offers for business entities; omit for personal and family]
+   [entity_offers for business entities; omit the section for personal and family]
 
    ## Key accounts and tools
 
-   [entity_tools as bullet list, or omit if not provided]
+   [entity_tools as bullet list, or `_None recorded._` if not provided]
 
    ## Related
 
-   - [<entity>/](<entity>/index.md)
+   - [<slug>/](../../<slug>/index.md)
    ```
-4. Rewrite `memory/entities/index.md` with a row for each entity (including self).
-5. Rewrite `memory/index.md` with the entities row updated to list actual entity names.
+4. Leave `memory/entities/index.md` and `memory/index.md` alone: the ContextOS MCP server lists each entity's profile and folder in them, and never write an `index.md` yourself.
 
 ---
 
-## Step 7: Autonomy and control (Phase E)
+## Step 7: Autonomy, communication, and control (Phase E)
 
-Establish what the agent is and is not permitted to do without sign-off. This layer is the most commonly skipped and the most costly to leave undefined.
+Establish what the agent is and is not permitted to do without sign-off. This layer is the most commonly skipped and the most costly to leave undefined. Then establish how to communicate with the operator, and what to avoid: every session reads both, so a gap here shows up in every exchange.
 
 `"Let's define how I should operate on your behalf. There are no right answers here; it is about calibrating to how you want to work."`
 
@@ -449,11 +461,23 @@ Establish what the agent is and is not permitted to do without sign-off. This la
 
 **E4:** `"Are there entities where I should have minimal autonomy by default, regardless of task type?"` Store as `low_autonomy_entities`.
 
-**E5:** `"Let's seed your anti-patterns file. This grows over time through vault captures;  right now we are just recording what is already clear."`
+**E5:** `"Now, how I should communicate with you. This is about what works, so think of real exchanges rather than rules; 'nothing yet' is a fine answer to any of these."` Ask each in turn, and for every answer, ask for the concrete instance first and the rule it shows second.
 
-`"Which spelling and punctuation conventions should vault writing follow? For example: Australian, British, American, or Canadian English, use of the Oxford comma, and any punctuation you would rather avoid entirely, such as em dashes."` Store as `language_convention`. This is not written to a file at this step; it is used directly in Step 9 to template `CLAUDE.md`'s Conventions section and the Global Instructions tone section.
+`"Which spelling and punctuation conventions should all writing follow? For example: Australian, British, American, or Canadian English, use of the Oxford comma, and any punctuation you would rather avoid entirely, such as em dashes."` Store as `language_convention`. It also sets the Conventions section of `AGENTS.md` in Step 9.
 
-Ask for each remaining category in turn:
+`"Think of a reply, from a person or an assistant, that landed exactly right with you, and one that grated. What was different about how each spoke to you: how direct, how formal, how warm, how long?"` Store as `cs_register`.
+
+`"Think of a response whose layout made it easy to use, and one whose layout got in the way. What did each do with lists, tables, headings, or prose, and when do you want depth rather than brevity?"` Store as `cs_structure`.
+
+`"Should the way I write for you change between kinds of content, say an internal note, a client document, a bio, and a social post? Give one example where it should change and one where it should stay the same."` Store as `cs_scope`.
+
+`"When a request is ambiguous, or there are several reasonable ways to do something, what should I do by default: ask first, lay out options with their trade-offs, or choose and explain? Think of a time one of those went wrong."` Store as `cs_defaults`.
+
+`"Think of someone, a person or an assistant, you have most liked thinking alongside. What did they do that made it work? Two or three traits, each with what it looked like in practice."` Store as `cs_personality`.
+
+**E6:** `"Let's seed your anti-patterns file: the behaviours to avoid, rather than the style to follow. This grows over time through vault captures; right now we are just recording what is already clear."`
+
+Ask for each category in turn:
 
 `"Language and tone: filler phrases, hedging constructions, or specific words the agent should never use when speaking or writing with you?"` Store as `ap_language`.
 
@@ -468,6 +492,37 @@ Ask for each remaining category in turn:
 All categories are optional. Skip any where the answer is nothing yet.
 
 **Write Phase E files:**
+
+`memory/identity/communication-style.md`, each section in the operator's own words, keeping the concrete instance beside the rule it shows:
+```markdown
+# Communication Style
+
+How to communicate with the operator: the language, register, structure, and defaults every session follows, in every kind of content. What to avoid is in [anti-patterns.md](../operating/anti-patterns.md); how the operator's public voice shifts by audience is in [voice-profile.md](voice-profile.md). Refined over time through vault captures.
+
+## Language
+
+[language_convention as bullet list, or `_None recorded._` if not provided]
+
+## Register
+
+[cs_register as bullet list, or `_None recorded._` if not provided]
+
+## Structure
+
+[cs_structure as bullet list, or `_None recorded._` if not provided]
+
+## Scope
+
+[cs_scope as bullet list, or `_None recorded._` if not provided]
+
+## Defaults
+
+[cs_defaults as bullet list, or `_None recorded._` if not provided]
+
+## Personality blend
+
+[cs_personality as bullet list, one trait each with what it looks like in practice, or `_None recorded._` if not provided]
+```
 
 `memory/operating/autonomy-policy.md`:
 ```markdown
@@ -500,23 +555,23 @@ Patterns, framings, and outputs the agent must avoid. Both for the agent's own c
 
 ## Language and tone
 
-[ap_language as bullet list, or omit section body if not provided]
+[ap_language as bullet list, or `_None recorded._` if not provided]
 
 ## Structure
 
-[ap_structure as bullet list, or omit section body if not provided]
+[ap_structure as bullet list, or `_None recorded._` if not provided]
 
 ## Reasoning
 
-[ap_reasoning as bullet list, or omit section body if not provided]
+[ap_reasoning as bullet list, or `_None recorded._` if not provided]
 
 ## Advice
 
-[ap_advice as bullet list, or omit section body if not provided]
+[ap_advice as bullet list, or `_None recorded._` if not provided]
 
 ## Content generation
 
-[ap_content as bullet list, or omit section body if not provided]
+[ap_content as bullet list, or `_None recorded._` if not provided]
 ```
 
 ---
@@ -543,177 +598,60 @@ Write `memory/identity/voice-profile.md` with the gathered content, structured b
 
 ---
 
-## Step 9: Path binding and finalisation (Phase G)
+## Step 9: Vault instructions and finalisation (Phase G)
 
-1. If `<vault_path>/CLAUDE.md` does not already exist, copy it from `$CONTEXT_OS_PLUGIN_ROOT/scaffold/COWORK.md`. Replace `{{OperatorName}}` with `first_name`.
+1. The scaffold step placed `AGENTS.md` (the vault's instructions, read by every agent host) and `CLAUDE.md` (a one-line `@AGENTS.md` import for Claude Code) at the vault root. Read `<vault>://AGENTS.md` and replace `{{OperatorName}}` with `first_name` using `mcp__contextos__fs_edit_file`.
 
-2. `CLAUDE.md` ships with a default spelling and punctuation convention (Australian English, Oxford comma, no em dashes) in its Conventions section. If `language_convention` from Phase E differs from that default, rewrite those two bullets to match what the operator stated. If Phase E's question was skipped, leave the shipped default in place and tell the operator it can be changed later.
+2. `AGENTS.md` ships with a default spelling and punctuation convention (Australian English, Oxford comma, no em dashes) in its Conventions section. If `language_convention` from Phase E differs from that default, rewrite those bullets to match what the operator stated, again with `fs_edit_file`. If Phase E's question was skipped, leave the shipped default in place and tell the operator it can be changed later.
 
-3. Generate the Global Instructions paste block. Cowork has no automatic equivalent of Claude Code's project `CLAUDE.md` load: a Cowork session's only guaranteed startup context is whatever is pasted into Global Instructions. Treat this block as self-contained.
-
-   Do not use `@`-prefixed file references anywhere in it; Cowork does not expand them. An explicit "read this file first" instruction is not a reliable substitute either, recent changes mean that kind of directive is often not honoured until specifically re-prompted mid-session, by which point a response has usually already been given    without the missing context. File paths in this block are soft references for elaboration only, never the delivery mechanism for anything the block depends on. The field has a practical ceiling of roughly 200 lines; a few extra lines of tone or autonomy content is worth it against the cost of a silent gap discovered mid-session and the rework it causes, but stay condensed within that ceiling.
-
-   Assemble the block from every phase of this interview, not autonomy alone. Where a phase was skipped, say so explicitly in that section rather than omitting it silently, so the gap stays visible in the block itself.
-
-   Wrap each major section in an XML-style tag rather than a markdown header. A header opens a section but never closes it, the next header is the only signal that the previous one ended; a tag has an explicit close, which gives the model a bounded unit to hold onto rather than an open-ended stream. This block has no fallback if a section's content is misread or bleeds into its neighbour, so use the more explicit structure:
-
+3. Create the team, unless it already exists (Step 1.3), by running the `scaffold` job once more (see [package.md](package.md), Step 4) with the operator and the members' names. It renders each member from its shipped template without passing it through the model:
+   ```bash
+   contextos-web jobs run --shared contextos-vault scaffold scaffold --format json --input vault=<vault> --input 'created_at="<now>"' \
+     --input 'operator=<first_name>' \
+     --input 'members=[{"function":"chief-of-staff","name":"<name>"},{"function":"librarian","name":"<name>"},{"function":"technologist","name":"<name>"},{"function":"support","name":"<name>"},{"function":"communications","name":"<name>"},{"function":"assurance","name":"<name>"}]'
    ```
-   If you are seeing this then your operating context facts are:
-   - you are running within the Claude Desktop application,
-   - operator has intentionally selected 'cowork' mode instead of 'chat' 
-   Safe assumption: the operator desires to interact with or have the conversation be informed by the rules of the knowledge substrate. Even seemingly simple initial prompts could be loaded with nuance. This assumption avoids corrective turns. 
+   It writes `registry/agents/<slug>.md` for each member, where `<slug>` is the name in lowercase-hyphenated form, and adds the operator and the members to `.contextos/team.toml`, flagging the chief of staff. It never overwrites an existing definition or duplicates a team entry; report anything `outputs.result` lists under `members_skipped` or `errors`.
 
-   <knowledge_substrate>
-   Root: [vault path] 
-   Plugins: [ContextOS, Obsidian] available in sandbox in randomly named sub-directories of `mnt/.remote-plugins/`
-   Bootstrap: run the `scripts/session-start` bash script installed as part of ContextOS to write the gate flag `CLAUDE_PLUGIN_ALLOW_SKILLS` used by downstream skills
-   Structure:
-   - File and folder names: always lowercase-hyphenated, never TitleCase or spaced.
-   - Every directory has an `index.md` cataloguing contents with one-line summaries.
-   - `index.md` files provide the retrieval mechanism and currency must be maintained.
-   - Double-moustache syntax used for variable placeholders
-   - Directories: operator-owned, agent-interactive 
-      - `registry/`: agent, hat, prompt, role, and skill definitions as used by ContextOS plugin skills
-      - `{{entity}}/`: information about 'personal' (self), family, business, employer, charity, etc
-      - `journal/`: Obsidian 'daily notes'. Operator-interactive. Date-based nesting `YYYY/MM/YYYY-MM-DD.md`.
-      - `notes/`: Obsidian 'unique notes' and scratchpad. Not authoritative. Date-based nesting `YYYY/MM/YYYY-MM-DD-HHmm.md`.
-      - `standards/`: Conventions and standards
-      - `templates/`: File templates, Obsidian Templater-compatible, if desired
-   - `memory/` sub-directories: agent-owned, operator-visible
-      - `glossary.md`: Common terms, references, acronyms, and nicknames
-      - `entities/`: Operating entities and state summary  
-      - `identity/`: About the operator
-      - `operating/`: How the operator works
-      - Date-based nesting `YYYY/MM/` and ISO-date-style file prefixes `YYYY-MM-DD`:
-         - `raw/`: Processed source extracts, markdown only (immutable beyond session)
-         - `research/`: AI-discovered source extracts, markdown only (immutable beyond session)
-         - `coding/`: Append-only coding lessons log. (immutable)
-         - `log/`: Append-only operations log. (immutable)
-         - `sessions/`: Append-only per-session summary. (immutable)
-      - `insights/`: Zettelkasten-style semantic layer parallel to `wiki/`. First-letter sharded `[a-z0-9]/`.
-      - `wiki/`: Compiled topical knowledge. Multi-level: `domain/topic/article` minimum.
-   Content:
-   - Defaults: 
-      - Format: obsidian-markdown 
-      - YAML frontmatter 
-         ---
-         type: 
-         title:
-         entity: 
-         status: active
-         created: 
-         updated: 
-         tags: []
-         aliases: []
-         ---
-      - `# References` links section as backmatter
-         [[link]] one-sentence summary
-   </knowledge_substrate>
-    
-   <quality_mandate>
-   - Empirical studies found total cost of after-the-fact corrections is ~8x getting it right the first time. 
-   - Catch deviations early and correct immediately.
-   - Errors pre-existing is no excuse for perpetuating them
-   - Applies to all content and interactions without exception
-   - Primary source fidelity trumps summarisation efficiency.
-   5 principles:
-   1. Derive from the primary, always.
-   2. Attribution must be verified, not assumed.
-   3. Completeness means in entirity, unless the gap is explicit; asserting partial as complete is an integrity failure
-   4. Internal consistency is non-negotiable; propagate corrections and update links before asserting completion.
-   5. Actionability from zero context is the reproducability test.
-   </quality_mandate>
+4. Write the operator's orientation. The scaffold step placed `registry/instructions/global.md`, which the server places in every Claude Code and Codex session, whatever folder it is opened in, and which is often the only part of the profile a session outside the vault receives. It is the key outcome of this interview: every phase's answers reach every session through it. Each section is an XML-style tag with an explicit close, so a section cannot bleed into its neighbour; never convert a tag to a Markdown heading, and never drop or rename one.
 
-   <autonomy_policy>
-   Open (no sign-off required): [autonomy_open, condensed to one line]
-   Gated (sign-off required): [autonomy_gated, condensed to one line]
-   Sensitive categories, never surface unprompted: [sensitive_categories, condensed]
-   Low-autonomy areas: [low_autonomy_entities, condensed, or omit]
-   Edge cases beyond this summary: memory/operating/autonomy-policy.md
-   </autonomy_policy>
+   Read it, then with `fs_edit_file`, one edit per section:
+   - Replace every `{{OperatorName}}` with `first_name`.
+   - A section still holding the line ``_Not yet captured. Run `/vault init` again to complete this section._`` is not captured. Replace that line, and any lines between the opening tag and it (the shipped `Language:` line, or what a quick pass wrote), with a condensed summary of the key points: bullets, specific rather than generic, and in the operator's own words where they gave them. Keep every line after it, including the closing pointer to the file holding the full detail, and never repeat that file's content in full.
+   - Fill a section from this run's answers, or, when its phase was captured in an earlier run (Step 1.3), from the file that phase wrote. A section the operator was asked about and had nothing for gets `_None recorded._` in place of the line.
+   - In quick mode, write what Q1 to Q7 captured directly above the line and keep the line, so a later full run completes the section; the team section is the exception, written in full.
+   - A section without the line is captured: leave it unless the operator asks to revise it.
 
-   <operator_tone_and_language>
-   [language_convention, condensed. ap_language, as a bullet list. If both were skipped: "No language or tone constraints captured yet; ask before assuming any."]
-   Capture refinements in `memory/identity/communication-style.md`
-   </operator_tone_and_language>
+   | Section | Summarise | Quick mode |
+   | --- | --- | --- |
+   | `<operator_identity>` | `full_name`, `location`, `roles`, the backstory in one line, the throughline, each value with its trade-off in one line, `goals`, `friction_points`, and `anchoring_language`, each maxim with what it means in practice | `full_name` and `location` |
+   | `<autonomy_policy>` | `Open:`, `Gated:`, `Sensitive categories, never surface unprompted:`, and `Low-autonomy entities:` (left out if none), each condensed to a line from `autonomy_open`, `autonomy_gated`, `sensitive_categories`, and `low_autonomy_entities`. Also remove the `Until it is:` line beneath it | `Gated:` from `quick_gated` |
+   | `<operator_tone_and_language>` | `Language:` set to `language_convention`, the same convention as `AGENTS.md`'s Conventions section after item 2, then the key points of `cs_register`, `cs_structure`, `cs_scope`, `cs_defaults`, and `cs_personality`, under a short label each | Nothing; the shipped `Language:` line stands |
+   | `<operator_voice_and_positioning>` | The audiences with how the voice shifts for each, `off_brand_tone`, `voice_rules`, `messaging_themes`, and `discrimination_rule`. Keep the pre-flight below it | Nothing |
+   | `<anti_patterns>` | `ap_language`, `ap_structure`, `ap_reasoning`, `ap_advice`, and `ap_content`, under a short label each. Inline them in full if the combined list is short; otherwise keep the items with the clearest cost if missed. This is the operating list, not a summary of one | Nothing |
+   | `<operator_operating_model>` | Each entity with its type, status, and one-line description (dormant or wound-down entities marked so), how the entities affect one another, the horizons with their periods, `planning_scope`, and `status_taxonomy` | The entities from Q3 and Q4 (personal, family if separate, and each business with the operator's role), and that the horizons are the shipped Macro/Meso/Micro default, not yet personalised |
+   | `<operator_current_priorities>` | For each horizon, its name and period, then its outcomes; then `Non-negotiables:` from `horizon_nonneg` (left out if none) | `quick_priority` as the one current focus, if given |
+   | `<team>` | The operator as the human member, then each member's name, slug, and function, naming the chief of staff as the one who triages and routes, from `member_names` or `.contextos/team.toml` | The full section, as in full mode |
 
-   <operator_voice_and_positioning>
-   Capture refinements in `memory/identity/voice-profile.md`
+   Write only the standing profile: the file is never a home for activity, progress, decisions, session notes, or history, which belong in tasks, `memory/sessions/`, the operation log, and the files each section points to.
 
-   Before drafting any external-facing content, establish or ask: 
-   - which entity is publishing and does that entity have specific conventions needing adoption or consideration; 
-   - who is actually reading it, the person with eyes on the page, not who attended or referred them; and, 
-   - whether the brief supplies hook material, key outcomes, prior context, and a call to action. 
-   Skipping this pre-flight produces content that needs multiple revision loops to correct.
-   </operator_voice_and_positioning>
+   The sections without the line (`<knowledge_substrate>`, `<quality_mandate>`, `<task_handling>`, `<vault_operations>`, and `<conduct>`) ship complete; leave them. Never write a host's global instructions file directly: the server copies `global.md` into them on the write, and nothing needs pasting into a host's settings. A `projection/` warning on the write means the copy could not be made; tell the operator what it says and point them at `doctor`. If a vault earlier in `vault_info` order also has `registry/instructions/global.md`, the hosts receive that one instead; tell the operator so.
 
-   <anti_patterns>
-   [ap_language, ap_structure, ap_reasoning, ap_advice, ap_content: inline in full if the combined list is short, otherwise condense to the items with the clearest cost if missed. This is the operating list, not a summary of one.]
-   </anti_patterns>
+5. Log. Call `mcp__contextos__vault_log_append` with `entry` set to `"init | vault initialised for [first_name] (quick)"` or `"init | vault initialised for [first_name] (full)"`, and `files` set to the list of all written files.
 
-   <operator_operating_model>
-   [entities summary as a bullet list]
-   Always tag the associated entity/s.
-   Operating rhythm: [horizons, condensed]
-   Full horizon structure, scope, and status taxonomy: `memory/operating/rhythm.md`
-   Actively maintain: `memory/operating/current-priorities.md`
-   </operator_operating_model>
-
-   <operator_current_priorities>
-   [top horizon name and period]: [outcomes, condensed]
-   Non-negotiables: [horizon_nonneg, condensed, or omit if none]
-   Full current-period detail: `memory/operating/current-priorities.md`
-   </operator_current_priorities>
-
-   <vault_operations>
-   /vault ingest [files] | /vault research <topic> | /vault query <query> | /vault capture | /vault consolidate |
-   /vault lint | /vault distil-transcript [files] | /vault log <entry> | /vault update
-   </vault_operations>
-
-   <cowork_conduct>
-   - Run the `scripts/session-startup` bootstrap script from ContextOS plugin before the first response, vault work or not, no exception for urgency or simplicity. 
-   - Invoke the `/vault query` skill command for content queries - direct walks and broad reads are too be minimised. 
-   - Audit every wiki file produced against `anti-patterns.md` before closing the session.
-   - Load `memory/operating/quality-standards.md` before any pass that edits existing files, not just new writes.
-   - Never silently edit existing memory from a session capture; propose the change, wait for approval, apply via `/vault consolidate` skill command.
-   - Never overwrite `memory/raw/` or `memory/research/`; both are immutable beyond session in which they were created.
-   - Derive source files from the primary document or transcript, read in full (in sections if long), never from a session summary or prior description. If a path is available, read it.
-   - If an extract is written from only part of a source, say so explicitly in the file; an acknowledged gap beats a silent partial pass.
-   - Verify content actually appears in a file or session before attributing it there; file names, session order, and prior labels are hypotheses, not evidence.
-   - Never invent a claim to fill a gap; flag it in `Open Questions`.
-   - Never let a hedged speculation from `memory/research/` surface in a wiki article as stated fact; it stays flagged until a primary source confirms it.
-   - Never soften an unsourced claim into a tendency ("often," "typically," "usually," "tends to"); attribute it to a source or observation, or flag it unknown. 
-   - Use indexes for retrieval; don't grep the whole vault.
-   - Every operation appends one line to `memory/log/YYYY/YYYY-MM/YYYY-MM-DD.md` - `HH:MM | [agent|manual] | operation | short description | files: [files touched]`
-   - Never move, copy, or filter an append-only log (`memory/log/YYYY/MM/YYYY-MM-DD.md`) to fix a misplaced entry; append a correction or cross-reference in the right file and leave the original where it landed.
-   - When a schema or convention changes, apply it on the next operation immediately; log old non-compliant content as a migration backlog, don't perpetuate the superseded pattern.
-   - Never declare a review complete on partial verification; check every file in scope against its primary source, or state explicitly what was and wasn't checked.
-   </cowork_conduct>
-   ```
-
-   Write to `memory/operating/global-instructions.md`.
-
-4. Log. Entry text depends on `init_mode`: `"init | vault initialised for [first_name] (quick)"` or `"init | vault initialised for [first_name] (full)"`. If MCP is available (see the vault router's MCP awareness section), call `mcp__contextos__vault_log_append` with that `entry` and `files` set to the list of all written files. Otherwise, append to `memory/log/YYYY/MM/YYYY-MM-DD.md`:
-   ```
-  HH:MM | agent | init | vault initialised for [first_name] ([quick or full]) | files: [list of all written files]
-   ```
-
-5. Tell the operator. If `init_mode` was `full`:
+6. Tell the operator, naming the team members. If `init_mode` was `full`:
    > "Your vault is set up. A few final steps:
-   > 1. Paste the block from `memory/identity/who-am-i.md` into Claude Settings, General, Instructions for Claude.
-   > 2. Paste the block from `memory/operating/global-instructions.md` into Cowork Settings, Edit Global Instructions on each device.
-   > 3. In Obsidian: enable the Templater plugin, point its template folder to `templates/`, and configure Daily Notes to use `templates/daily-journal.md`.
-   > Run `/vault capture` at the end of any meaningful session to record decisions
-   > and propose memory updates.
+   > 1. Make sure ContextOS MCP is configured, with this vault registered, in each agent app you use (Claude Code, Codex).
+   > 2. In Obsidian: enable the Templater plugin, point its template folder to `templates/`, and configure Daily Notes to use `templates/daily-journal.md`.
+   > 3. Optionally, paste the block from `memory/identity/who-am-i.md` into your Claude profile settings, so chats outside the vault know who you are.
+   > Run `/vault capture` at the end of any meaningful session to record decisions and propose memory updates.
    > Run `/vault consolidate` weekly to apply agreed self-improvements.
-   > Run `/vault lint` after a period of significant vault change as a health check"
+   > Run `/vault health` after a period of significant vault change."
 
    If `init_mode` was `quick`:
    > "Your vault is up and running. A few final steps:
-   > 1. Paste the block from `memory/identity/who-am-i.md` into Claude Settings, General, Instructions for Claude.
-   > 2. Paste the block from `memory/operating/global-instructions.md` into Cowork Settings, Edit Global Instructions on each device.
-   > 3. In Obsidian: enable the Templater plugin, point its template folder to `templates/`, and configure Daily Notes to use `templates/daily-journal.md`.
-   > This was the quick pass, so identity, planning, autonomy, and voice are only lightly filled in, marked `not yet captured` where skipped. Run `/vault init` again whenever you have 10 to 15 minutes for the full walkthrough to fill those in."
+   > 1. Make sure ContextOS MCP is configured, with this vault registered, in each agent app you use (Claude Code, Codex).
+   > 2. In Obsidian: enable the Templater plugin, point its template folder to `templates/`, and configure Daily Notes to use `templates/daily-journal.md`.
+   > This was the quick pass, so identity, planning, autonomy, communication style, and voice are only lightly filled in, marked `not yet captured` where skipped. Run `/vault init` again whenever you have 10 to 15 minutes for the full walkthrough to fill those in."
 
 ---
 
@@ -724,4 +662,5 @@ Write `memory/identity/voice-profile.md` with the gathered content, structured b
 - Log after all writes are complete.
 - Do not apply voice profile writes unless the operator explicitly requests Phase F.
 - Proprietary frameworks and IP, knowledge domains and the operator's positions within them, detailed audience segments, and key relationships are not covered in this skill. These are built up through ongoing vault ingest and are best addressed in a dedicated follow-up interview after 2 to 4 weeks of vault use.
-- Quick mode (Step 2Q) never asks more than its five questions and never fabricates an answer to a question it didn't ask; skipped detail is always an explicit stub, not invented content.
+- Quick mode (Step 2Q) asks only its seven questions (Q7 asks for names only if the operator wants to change them), and never fabricates an answer to a question it didn't ask; skipped detail is always an explicit stub, not invented content.
+- A re-run never replaces captured content; it completes what is not yet captured.

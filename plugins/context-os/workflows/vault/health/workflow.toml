@@ -1,0 +1,77 @@
+name = "Check a vault's knowledge quality"
+entry = "health.rhai"
+
+[mcp_servers]
+allow = ["contextos"]
+
+# Reads only: the check never writes, so a failed or repeated run changes nothing.
+[mcp_tools]
+allow = [
+    { server = "contextos", tool = "fs_search_files" },
+    { server = "contextos", tool = "frontmatter_read" },
+    { server = "contextos", tool = "fs_attach_file" },
+    { server = "contextos", tool = "fs_get_file_info" },
+    { server = "contextos", tool = "query_graph" },
+]
+
+[[input]]
+name = "vault"
+kind = "vault"
+
+# Today, in the operator's time zone: the staleness checks count whole days back from it.
+[[input]]
+name = "today"
+kind = "date"
+
+# Days since `updated` after which a wiki article is stale; 90 when not given.
+[[input]]
+name = "stale_days"
+kind = "number"
+required = false
+
+# Days since `created` after which a proposed insight is stale; 30 when not given.
+[[input]]
+name = "proposed_days"
+kind = "number"
+required = false
+
+[[output]]
+name = "report"
+kind = "object"
+[[output.properties]]
+name = "wiki_notes"
+kind = "number"
+[[output.properties]]
+name = "insight_notes"
+kind = "number"
+[[output.properties]]
+name = "total_findings"
+kind = "number"
+[[output.properties]]
+name = "truncated"
+kind = "bool"
+[[output.properties]]
+name = "counts"
+kind = "array"
+[output.properties.items]
+kind = "object"
+[[output.properties.items.properties]]
+name = "check"
+kind = "string"
+[[output.properties.items.properties]]
+name = "count"
+kind = "number"
+[[output.properties]]
+name = "findings"
+kind = "array"
+[output.properties.items]
+kind = "object"
+[[output.properties.items.properties]]
+name = "check"
+kind = "string"
+[[output.properties.items.properties]]
+name = "path"
+kind = "string"
+[[output.properties.items.properties]]
+name = "detail"
+kind = "string"

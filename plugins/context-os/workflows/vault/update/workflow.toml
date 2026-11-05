@@ -1,0 +1,121 @@
+name = "Update a vault"
+entry = "update.rhai"
+
+[mcp_servers]
+allow = ["contextos"]
+
+[mcp_tools]
+allow = [
+    { server = "contextos", tool = "fs_list_directory" },
+    { server = "contextos", tool = "fs_get_file_info" },
+    { server = "contextos", tool = "fs_attach_file" },
+    { server = "contextos", tool = "fs_write_file" },
+    { server = "contextos", tool = "fs_move_file" },
+    { server = "contextos", tool = "doctor" },
+    { server = "contextos", tool = "fs_create_directory" },
+]
+
+[[input]]
+name = "vault"
+kind = "vault"
+
+[[input]]
+name = "updated_at"
+kind = "datetime"
+
+[[input]]
+name = "apply"
+kind = "bool"
+required = false
+
+[[input]]
+name = "resolve"
+kind = "array"
+required = false
+[input.items]
+kind = "object"
+[[input.items.properties]]
+name = "path"
+kind = "string"
+[[input.items.properties]]
+name = "choice"
+kind = "string"
+
+[[input]]
+name = "migrate"
+kind = "array"
+required = false
+[input.items]
+kind = "string"
+
+[[output]]
+name = "plan"
+kind = "object"
+[[output.properties]]
+name = "applied"
+kind = "bool"
+[[output.properties]]
+name = "folders_added"
+kind = "array"
+[output.properties.items]
+kind = "string"
+[[output.properties]]
+name = "files_added"
+kind = "array"
+[output.properties.items]
+kind = "string"
+[[output.properties]]
+name = "files_refreshed"
+kind = "array"
+[output.properties.items]
+kind = "string"
+[[output.properties]]
+name = "conflicts"
+kind = "array"
+[output.properties.items]
+kind = "string"
+[[output.properties]]
+name = "resolved"
+kind = "array"
+[output.properties.items]
+kind = "string"
+[[output.properties]]
+name = "migrations_pending"
+kind = "array"
+[output.properties.items]
+kind = "object"
+[[output.properties.items.properties]]
+name = "id"
+kind = "string"
+[[output.properties.items.properties]]
+name = "description"
+kind = "string"
+[[output.properties.items.properties]]
+name = "action"
+kind = "string"
+required = false
+[[output.properties.items.properties]]
+name = "paths"
+kind = "array"
+[output.properties.items.properties.items]
+kind = "string"
+[[output.properties]]
+name = "migrations_applied"
+kind = "array"
+[output.properties.items]
+kind = "string"
+[[output.properties]]
+name = "team_conflicts"
+kind = "array"
+[output.properties.items]
+kind = "string"
+[[output.properties]]
+name = "workspaces_added"
+kind = "array"
+[output.properties.items]
+kind = "string"
+[[output.properties]]
+name = "errors"
+kind = "array"
+[output.properties.items]
+kind = "string"

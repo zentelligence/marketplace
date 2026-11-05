@@ -1,188 +1,74 @@
 ---
 name: app
-description: "Scaffolds a new contextos-web app under `registry/apps/<slug>/` in the vault registry: a conformant `manifest.toml` (schema per `specification/web-apps.md`) and an entry-file stub. Fires only on the explicit command `/app create <slug>` (optionally `--kind spa|htmx`). Does not fire on inline persona-style triggers (no `<slug>:app`, unlike `:role`/`:hat`/`:agent`): an app is served content, not a cognitive posture to adopt in-session. Does not fire for `/role`, `/hat`, `/agent`, `/prompt`, or `/vault` commands (owned by the sibling skills), and does not itself register the app with a running `contextos-web` process (discovery happens on that server's own next request for the vault, or via its `/apps/` page's rescan control)."
+description: "Routes an operator command about ContextOS Web apps (`registry/apps/`) to its matching sub-skill: list (summarise the vault's apps from their manifest.toml, checked against ContextOS Web's discovery rules), create (guided interview and V-sequence build of a new app, verified on the operator's ContextOS Web host), update (review and revise apps after ContextOS Web or an app's needs change). Fires on explicit `/app COMMAND` invocations and on conversational requests to list, build, or refresh vault apps, e.g. 'what apps are registered', 'build me an app that does X', 'check the apps against the latest contextos-web'. Does not fire for workflows or jobs that run with no screen (owned by the sibling workflow and job skills), for `SLUG:role`, `SLUG:hat`, or `SLUG:agent` (owned by those skills), for `/vault COMMAND` or vault-content requests, or for a web page or tool that will not be registered under `registry/apps/` and served by ContextOS Web."
 license: Apache-2.0
 user-invocable: true
 disable-model-invocation: false
-argument-hint: "create <slug> [--kind spa|htmx]"
+argument-hint: "<list|create [description]|update [slug]>"
 arguments: ["command"]
 ---
 
-# Skill: app
+# App: Router Skill
 
-Scaffolds a `contextos-web` app: a `registry/apps/<slug>/manifest.toml` and its entry-file stub. Activated via `/app create <slug>` (or `/app create <slug> --kind htmx`). There is no activation flow (unlike `role`/`hat`/`agent`): an app is not adopted in-session, it is served by `contextos-web` once registered.
+Routes app commands to the sub-skill that carries them out. Load this file first, then load only the sub-skill the command needs.
 
----
-
-## Background: what this scaffolds
-
-`contextos-web` (the `context-os-mcp` repository's browser-facing crate) discovers apps under `registry/apps/<slug>/` in each configured vault and serves them at `GET /<vault-name>/apps/<slug>/...`. Discovery reads only `manifest.toml`; every other file in the app's own directory (a `readme.md`, source files, the built bundle) is either served content or ignored. Full route and validation behaviour: `specification/web-routes.md` §4 and `specification/web-apps.md`.
-
-Two app kinds exist:
-
-- **`spa`** — fully served in v1. A static single-page-app bundle, opened in a new tab (`target = "_blank"`). An unmatched sub-path under the app's own route falls back to the bundle's own entry file, so the SPA's client-side router still works.
-- **`htmx`** — accepted by the schema and listed on the vault's `/apps/` page, but not yet servable (`contextos-web` returns a distinct "not yet supported" response for it). Scaffold one now to reserve the slug and shape; it becomes servable once stage 2 lands.
+An app is an interactive web tool in a vault's `registry/apps/<slug>/`, discovered and served by ContextOS Web at `/<vault>/apps/<slug>/`. Its JavaScript calls MCP tools through ContextOS Web's proxy. This skill scopes, builds, verifies, lists, and maintains apps; it does not run or configure the ContextOS Web server.
 
 ---
 
-## MCP awareness
+## Before any command
 
-If a ContextOS MCP server is configured for this vault, prefer its tools over the harness's raw `Write`/`Edit`, falling back automatically if MCP is unavailable. Check once per invocation: attempt `mcp__contextos__vault_info`; if it succeeds, prefer the named MCP tools per step below, falling back to `Write`/`Edit` only if a specific call errors. If `vault_info` is unavailable or errors, use `Write`/`Edit` throughout.
+1. **ContextOS MCP.** This skill reads and writes the vault only through ContextOS MCP. Follow steps 1, 2, and 4 of the vault router's [Before any command](../vault/SKILL.md#before-any-command) section: confirm the server with `mcp__contextos__vault_info` and choose the vault. If the server is unavailable, report it and stop; never fall back to the host's own file tools for vault files. Paths below are within the chosen vault (`<vault>://...`).
+2. **The V-sequence set.** `create` and `update` compose the shipped roles and hats. Check them as the workflow router's [Before any command](../workflow/SKILL.md#before-any-command) step 2 describes, and tell the operator to run `/vault update` if any is missing.
 
 ---
 
-## Inputs
+## What ContextOS Web checks
 
-| Input | Source | Required |
+ContextOS Web registers an app only when its `manifest.toml` passes discovery. Every sub-skill checks the same rules:
+
+- The keys are only `name`, `slug`, `kind`, `entry`, and `mcp_servers`; any other key rejects the manifest.
+- `name` is present and not blank. `kind` is `js`, `spa`, or `htmx`. `entry` is present, relative to the app's folder, and the file exists.
+- `slug`, when present, is lowercase letters, digits, and hyphens. Leave it out: ContextOS Web serves an app's files from the folder its slug names, so a slug that differs from the folder name is listed but does not open.
+- Every `mcp_servers` name is a `[[mcp_server]]` configured in the host's `web.toml`. ContextOS MCP cannot read `web.toml`; the host's discovery checks it.
+- `js` and `spa` apps are served. `htmx` apps are listed but reported as not yet supported by the ContextOS Web versions this skill was written against; check the operator's host rather than assuming either way.
+
+A manifest that fails is left out of the apps list, and the reason goes to the ContextOS Web log. Discovery is cached per vault; `POST /<vault>/apps/rescan` (the Rescan control on the apps page) refreshes it.
+
+---
+
+## The operator's host
+
+Verification that needs ContextOS Web itself (rescan, the apps list, serving an app, and its static assets) uses HTTP on the host's bind address: `[server] bind` in `web.toml`, by default `127.0.0.1:7332`, loopback only. Use it from this session's shell when the shell is on that host (for example `curl -s http://127.0.0.1:7332/<vault>/apps/`). If it cannot be reached, give the operator the exact request or page to open and ask what they see. Always say which host and address a check ran against, and never report a check as passed that was not run.
+
+---
+
+## Available commands
+
+| Command | Sub-skill | Purpose |
 | --- | --- | --- |
-| App slug | `/app create <slug>` | Yes |
-| Kind | `--kind spa\|htmx` flag, or interview | No (default `spa`) |
-| `registry/apps/<slug>/manifest.toml` | Vault registry | Existence check before overwrite |
-| `web.toml`'s configured `[[mcp_server]]` names | Operator (this skill has no live connection to a running `contextos-web` instance) | Only if the app names `mcp_servers` |
+| `list` | [list.md](list.md) | Summarise the vault's apps and check their manifests |
+| `create [description]` | [create.md](create.md) | Interview, V-sequence build, and host verification of a new app |
+| `update [slug]` | [update.md](update.md) | Review and revise apps after ContextOS Web or their needs change |
 
 ---
 
-## Outputs
+## Routing
 
-| Output | Notes |
-| --- | --- |
-| `registry/apps/<slug>/manifest.toml` | The app's machine-readable manifest |
-| `registry/apps/<slug>/<entry>` | A minimal entry-file stub (only written if it does not already exist) |
-| Confirmation report | Names the manifest path and how the app becomes visible |
+Take the command from the declared `command` argument, or from the operator's own words when the skill fired conversationally.
 
----
-
-## Flow
-
-### Step 1: extract slug and kind
-
-Normalise the slug to lowercase-hyphenated form (`[a-z0-9-]+`), matching the vault's existing file-naming convention and `manifest.toml`'s own `slug` field validity rule. Reject and ask again if the operator supplies a slug outside that character class rather than silently rewriting it beyond simple case-folding and space-to-hyphen conversion.
-
-Read `--kind` if given; default `spa`.
-
-### Step 2: existence check
-
-Check whether `registry/apps/<slug>/manifest.toml` already exists (`mcp__contextos__fs_get_file_info` if MCP is available, otherwise a direct file read attempt). If it exists, confirm with the operator before overwriting.
-
-### Step 3: interview
-
-Ask sequentially (wait for each answer), skipping a question the operator already answered via a flag:
-
-- `"Display name: what should this app be called on the vault's apps page? (e.g. 'Task Register Dashboard')"`
-- `"Entry file: what is the app's own entry file, relative to its own directory? (default: index.html)"`
-- `"Target: '_blank' (opens in a new tab) or 'embed' (stage-2 inline composition)? (default: _blank for spa, embed for htmx)"`
-- `"MCP servers: which configured '[[mcp_server]]' names (from this vault's web.toml) will this app call, if any? List names separated by commas, or leave blank for a purely static app."`
-
-Do not invent a value for any of these; an unanswered optional question keeps its stated default.
-
-### Step 4: write the manifest
-
-Write `registry/apps/<slug>/manifest.toml` (creating the directory) with the schema below, substituting the interview answers. Field order and comments are cosmetic; the required shape is documented in full under "Manifest schema" below.
-
-If MCP is available, prefer `mcp__contextos__fs_write_file`; otherwise use the `Write` tool directly.
-
-### Step 5: write the entry-file stub
-
-If `registry/apps/<slug>/<entry>` does not already exist, write a minimal stub:
-
-- **`spa`**: the "SPA entry stub" template below, which demonstrates calling an MCP tool via the JS client.
-- **`htmx`**: a bare `<div>` placeholder noting that stage-2 composition is not yet implemented; do not fabricate SSE-subscription markup that has no server-side counterpart yet.
-
-### Step 6: confirm
-
-Report to the operator:
-
-> "App `<slug>` scaffolded at `registry/apps/<slug>/manifest.toml`. It becomes visible on `contextos-web`'s `GET /<vault-name>/apps/` page the next time that server discovers this vault's `registry/apps/` (its first request for this vault since startup, or the refresh control on that page for an already-running server). No `contextos-web` restart or code change is required."
-
-If the manifest names any `mcp_servers`, add:
-
-> "Confirm each of `<names>` is present as a `[[mcp_server]]` entry in this vault's own `contextos-web` instance's `web.toml` — this skill cannot verify that against a running server, and a name absent there will fail registration with a diagnostic naming the missing server."
-
----
-
-## Manifest schema
-
-Full authority: `specification/web-apps.md` §2. Summarised here for the interview substitution in Step 4.
-
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `name` | string | yes | Display name shown on the vault's apps page |
-| `slug` | string | no | Defaults to the containing directory's name; must be `[a-z0-9-]+` if given explicitly |
-| `kind` | `"spa"` \| `"htmx"` | yes | `"htmx"` is schema-valid but not yet servable |
-| `entry` | string | yes | Relative path within this app's own directory; must exist at registration time or the whole app fails to register |
-| `target` | `"_blank"` \| `"embed"` | yes | `"_blank"` for a `spa` app opened in a new tab; `"embed"` names the intended `htmx` composition mode |
-| `mcp_servers` | string[] | no (default empty) | Every entry must match a `[[mcp_server]]` name in the vault's `contextos-web` `web.toml`; empty is valid (a purely static app) |
-
-An unrecognised key, an invalid `kind`/`target` value, or an `mcp_servers` entry the running server does not recognise all fail that one app's registration with a diagnostic naming the app and the violation, without affecting any other app's registration.
-
-### Worked example: `kind = "spa"`
-
-```toml
-name    = "Task Register Dashboard"
-slug    = "task-register"
-kind    = "spa"
-entry   = "index.html"
-target  = "_blank"
-
-mcp_servers = ["contextos"]
-```
-
-### Worked example: `kind = "htmx"` (schema-valid, not yet servable)
-
-```toml
-name    = "Live Task Widget"
-slug    = "live-task-widget"
-kind    = "htmx"
-entry   = "widget.html"
-target  = "embed"
-
-mcp_servers = ["contextos"]
-```
-
----
-
-## SPA entry stub (fallback)
-
-Used for a `kind = "spa"` app when `<entry>` does not already exist. Demonstrates the deterministic, non-model-mediated MCP call surface (`callTool`) every registered app has available with no LLM step involved — the same tool contract a direct API consumer or `contextos-mcp` client would use.
-
-```html
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title><Display Name></title>
-</head>
-<body>
-<h1><Display Name></h1>
-<pre id="output">Loading…</pre>
-<script src="/static/contextos-web-client.js"></script>
-<script>
-  // Replace "contextos" and "vault_info" with the server/tool this app
-  // actually needs; see this manifest's own `mcp_servers` allow-list.
-  window.contextosWeb
-    .callTool("contextos", "vault_info", {})
-    .then((result) => {
-      document.getElementById("output").textContent = JSON.stringify(result, null, 2);
-    })
-    .catch((error) => {
-      document.getElementById("output").textContent = "Error: " + error.message;
-    });
-</script>
-</body>
-</html>
-```
-
----
-
-## Discovering available MCP server names
-
-There is no live "list configured servers" endpoint this skill can call. `mcp_servers` names come from the vault operator's own `contextos-web` `web.toml` (`web-architecture.md` §2, `[[mcp_server]]` entries), which this skill has no filesystem access to (it lives outside the vault, alongside the `contextos-web` binary). Ask the operator directly, or point them at their own `web.toml`, rather than guessing a name.
+- No command, or `list`: load [list.md](list.md).
+- `create`, optionally with a description: load [create.md](create.md), passing the description as the answer to its first question.
+- `update`, optionally with a slug: load [update.md](update.md), scoped to that app if given.
+- Work that runs with no screen and no person watching: hand over to the [workflow](../workflow/SKILL.md) skill.
+- Anything else: ask one short clarifying question.
 
 ---
 
 ## Invariants
 
-- Activate only on the explicit `/app create <slug>` command. Never infer app creation from task phrasing.
-- Never invent a `manifest.toml` field value the operator did not supply and this document does not default; leave the interview's stated defaults in place instead.
-- Writes only `registry/apps/<slug>/manifest.toml` and, when absent, its own entry-file stub. No other files, and never a `contextos-web` configuration file (`web.toml` is outside the vault and outside this skill's writable scope).
-- This skill scaffolds the manifest; it does not itself register the app with any running `contextos-web` process. Say so plainly in the confirmation (Step 6) rather than implying immediate availability.
+- Vault files are read and written only through ContextOS MCP.
+- `list` is read-only. Only `create` and `update` write into `registry/apps/`, and only after the operator confirms.
+- Never invent content. An interview answer left open is recorded as open.
+- Never claim an app renders or works without a check that showed it, and always say what was checked, where, and what was not.
+- Never put a secret, credential, or token in an app's files: they are vault content.

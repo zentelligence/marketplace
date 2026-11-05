@@ -1,0 +1,135 @@
+# How ContextOS Web's Tasks screens read this vault's tasks, and the states each task type moves through. This is the
+# starting set; customise it in ContextOS Web's Vault Settings, Tasks, which keeps these comments.
+#
+# Each task type moves through its own stages ([[task_type.stage]]), or the shared stages ([[stage]]) when it
+# declares none. A stage's `closes` says whether entering it closes a task: `completed` or `cancelled` stamps that
+# date, `never` leaves the task open. The dispatch skill needs the action states next, doing, waiting, and review.
+
+# The shared stages: the action lifecycle, in order.
+[[stage]]
+state = "backlog"
+label = "Backlog"
+icon = "inbox"
+bucket = "backlog"
+colour = "grey"
+
+[[stage]]
+state = "next"
+label = "Next"
+icon = "circle"
+bucket = "backlog"
+colour = "blue"
+
+[[stage]]
+state = "doing"
+label = "Doing"
+icon = "loader"
+bucket = "now"
+colour = "green"
+
+[[stage]]
+state = "waiting"
+label = "Waiting"
+icon = "clock"
+bucket = "needs_call"
+colour = "amber"
+
+[[stage]]
+state = "review"
+label = "Review"
+icon = "list-checks"
+bucket = "needs_call"
+colour = "purple"
+
+[[stage]]
+state = "done"
+label = "Done"
+icon = "check"
+bucket = "done"
+colour = "grey"
+closes = "completed"
+
+[[stage]]
+state = "dropped"
+label = "Dropped"
+icon = "circle"
+colour = "faint"
+closes = "cancelled"
+
+[hierarchy]
+depth_labels = []
+
+[[task_type]]
+value = "action"
+label = "Action"
+prefix = "A"
+initial = "next"
+
+[[task_type]]
+value = "decision"
+label = "Decision"
+prefix = "D"
+initial = "proposed"
+
+[[task_type.stage]]
+state = "proposed"
+label = "Proposed"
+icon = "scale"
+bucket = "needs_call"
+colour = "teal"
+
+[[task_type.stage]]
+state = "adopted"
+label = "Adopted"
+icon = "check"
+bucket = "done"
+colour = "grey"
+closes = "completed"
+
+[[task_type.stage]]
+state = "dropped"
+label = "Dropped"
+icon = "circle"
+colour = "faint"
+closes = "cancelled"
+
+[[task_type]]
+value = "question"
+label = "Question"
+prefix = "Q"
+initial = "open"
+
+[[task_type.stage]]
+state = "open"
+label = "Open"
+icon = "circle-help"
+bucket = "needs_call"
+colour = "amber"
+
+[[task_type.stage]]
+state = "answered"
+label = "Answered"
+icon = "check"
+bucket = "done"
+colour = "grey"
+closes = "completed"
+
+[[task_type.stage]]
+state = "dropped"
+label = "Dropped"
+icon = "circle"
+colour = "faint"
+closes = "cancelled"
+
+# Most urgent first: the order a priority sort follows.
+[[priority]]
+value = "high"
+label = "High"
+
+[[priority]]
+value = "normal"
+label = "Normal"
+
+[[priority]]
+value = "low"
+label = "Low"

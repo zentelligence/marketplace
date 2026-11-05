@@ -16,7 +16,7 @@ Process source material into the vault memory system: files placed in the shared
 | --- | --- | --- |
 | `args.files` | Router (operator named file(s) in the command, e.g. `/vault ingest ~/notes.md`) | One or more paths, comma- or space-separated; may be absolute, `~`-relative, or vault-relative; may or may not sit in an inbox |
 | Files in `inbox/` | Operator-placed | Any format: md, txt, pdf, docx, csv, export |
-| Uncited files in `memory/research/` | `/vault research` output | Research files not yet referenced by a `**Source:**` line in any wiki article |
+| Uncited files in `memory/research/` | `/vault research` output | Research files not yet listed in any wiki article's frontmatter `sources` |
 | `memory/operating/vault-conduct.md` | Vault | Read before writing any file |
 | `memory/index.md` and relevant subtree indexes | Vault | For determining where to write |
 
@@ -28,9 +28,8 @@ Process source material into the vault memory system: files placed in the shared
 | --- | --- |
 | Processed source extract | `memory/raw/YYYY/MM/YYYY-MM-DD-<slug>.md` (skipped for `memory/research/` sources) |
 | Wiki article(s) | `memory/wiki/<domain>/<topic>/<article>.md` (new or updated) |
-| Updated wiki index(es) | `memory/wiki/<domain>/index.md`, `memory/wiki/index.md` |
 | Archived inbox file | `processed/<filename>` (inbox-sourced files only) |
-| Log entry | `memory/log/YYYY/MM/YYYY-MM-DD.md` |
+| Log summary | `vault_log_append` |
 
 ---
 
@@ -39,40 +38,28 @@ Process source material into the vault memory system: files placed in the shared
 ### Step 1: pre-flight
 
 1. Read `memory/operating/vault-conduct.md`.
-2. If the router passed `args.files` (the operator named specific file(s) in the command, e.g. `/vault ingest ~/Downloads/notes.md`), split on commas or whitespace and resolve each path (`~`-expand, or resolve relative to the vault root). Check each exists.
-   - If at least one resolves, process exactly this set for the rest of this run — skip the inbox and `memory/research/` scans in steps 3 to 4 below.
+2. If the router passed `args.files` (the operator named specific file(s) in the command, e.g. `/vault ingest ~/Downloads/notes.md`), split on commas or whitespace and resolve each path. A vault-relative path is checked with `mcp__contextos__fs_get_file_info` (`<vault>://<path>`). ContextOS MCP can only copy a file that is inside a vault, so for a path outside the vault (absolute or `~`-relative), ask the operator to place the file in `inbox/` and continue with it from there. Only if the operator declines may you read it with the host's own file tools, which then pass its content through the model; say so, and still write only through ContextOS MCP.
+   - If at least one resolves, process exactly this set for the rest of this run; skip the inbox and `memory/research/` scans in steps 3 to 4 below.
    - If none resolve to an existing file, tell the operator the named path(s) could not be found and ask them to confirm the path, or place the file in `inbox/`, then wait for a response rather than falling silently through to the scans below.
-3. Otherwise, scan `inbox/` for files.
-4. Otherwise, also scan `memory/research/` for research files not yet cited by any wiki article. List candidates, then for each check whether it is already cited:
-   ```bash
-   find memory/research -name "*.md" ! -name "index.md"
-   # for each result <path>:
-   grep -rlF "<path>" memory/wiki/
-   ```
-   A research file with no match is pending; treat it as an available source.
+3. Otherwise, list `inbox/` with `mcp__contextos__fs_list_directory`.
+4. Otherwise, also find research files not yet cited by any wiki article. List them with `mcp__contextos__fs_search_files` (`path: "<vault>://memory/research"`, `pattern: "**/*.md"`, excluding `index.md`), then ask `mcp__contextos__query_graph` for each file's backlinks. A research file with no backlink from `memory/wiki/` is pending; treat it as an available source.
 5. If no `args.files` were given, `inbox/` is empty, and no uncited research files exist (a bare `/vault ingest` with nothing to process), ask the operator which file(s) to ingest: paste the content directly, upload a file, place it in    `inbox/`, or name a path directly, then wait for a response rather than stopping silently.
 6. For each file, determine: format, source type (operator-named path, inbox, or `memory/research/`), likely domain, and whether a raw extract already exists for this source.
 
 ### Step 2: extract to raw
 
-Files sourced from `memory/research/` are already in extracted, citable form (per `vault_lint.py`'s citation check, which resolves `**Source:**` lines against `memory/raw/` or `memory/research/` equally) — skip this step for them entirely and carry the research file's own path forward as the source reference into Step 3. Never copy or move `memory/research/` content into `memory/raw/` or an inbox; it is append-only at its original path.
+Files sourced from `memory/research/` are already in extracted, citable form (a wiki article's `sources` may list a `memory/raw/` or a `memory/research/` path equally); skip this step for them entirely and carry the research file's own path forward as the source reference into Step 3. Never copy or move `memory/research/` content into `memory/raw/` or an inbox; it is append-only at its original path.
 
 For each remaining file (inbox-sourced or an operator-named path from `args.files`):
 
 1. Determine whether the source is a conversational transcript (masterclass, webinar, coaching call, training session, sales call) rather than a document or export. If so, follow `skills/vault/distil-transcript.md`'s Steps 2 to 4 (profile, read, and extract, which handle the long-line truncation risk in raw transcript exports) to produce the structured extract at `memory/raw/YYYY/MM/YYYY-MM-DD-<slug>.md`, then carry that file forward as this source's raw extract into Step 3 below, skipping the Markdown/non-Markdown check that follows for this file.
 
-2. Otherwise, if the file is a Markdown document, use the copy script:
-   ```bash
-   session-start >/dev/null 2>&1
-   source "${TMPDIR:-/tmp}/plugin-data.env" 2>/dev/null
-   python $CONTEXT_OS_PLUGIN_ROOT/scripts/copy_markdown_to_raw.py \
-     --vault-root . \
-     --source inbox/<filename>.md \
-     --type document \
-     --domain <best-fit-domain>
-   ```
+2. Otherwise, if the file is a Markdown document in the vault, copy it by reference so its content never passes through the model:
+   1. Read its first heading cheaply with `mcp__contextos__fs_read_text_file` and `head: 20`; that gives `origin` (fall back to the file name) and the `slug`. Read any frontmatter it carries with `mcp__contextos__frontmatter_read`, which also returns its `content_hash`.
+   2. Call `mcp__contextos__note_create` with `path: "<vault>://memory/raw/YYYY/MM/YYYY-MM-DD-<slug>.md"` (the operator's local date from `vault_info`), `content_from: {path: "<vault>://<source path>", expected_hash: "<content_hash>"}`, and `frontmatter` holding the source's own fields plus `origin`, `source_path` (the source's vault path), `captured` (today), `summary` (one line), `type: document`, and `domain` (best fit). The server copies the body verbatim and leaves the source's frontmatter behind, which is why its fields are passed on here.
+   3. A refusal because the path exists means a raw extract of that name is already there: report it rather than choosing a new name, since the source may already have been ingested. An `io/conflict` means the source changed after you read it: read it again and retry once.
 
-3. For non-Markdown, non-transcript sources (PDF, DOCX, TXT, etc.), extract all substantive content to clean Markdown, then write manually to `memory/raw/YYYY/MM/YYYY-MM-DD-<slug>.md`. Check whether `templates/raw-article.md` exists in the vault. If it does, read it and use its frontmatter and body structure as the template. If it does not exist, use the fallback frontmatter below:
+3. For non-Markdown, non-transcript sources (PDF, DOCX, TXT, etc.), extract all substantive content to clean Markdown, then write it with `mcp__contextos__note_create` to `<vault>://memory/raw/YYYY/MM/YYYY-MM-DD-<slug>.md`, passing the frontmatter as structured fields. Check whether `templates/raw-article.md` exists in the vault. If it does, read it and use its frontmatter and body structure as the template. If it does not exist, use the fallback frontmatter below:
    ```yaml
    ---
    origin: "<original title>"
@@ -90,20 +77,14 @@ For each remaining file (inbox-sourced or an operator-named path from `args.file
 
 For each source (a raw extract written in Step 2, or a `memory/research/` file carried forward unchanged):
 
-1. Find existing articles on the same topic. If MCP is available (see the vault router's MCP awareness section), call `mcp__contextos__query_text` with `query` built from the keywords and `path_prefix: "memory/wiki/<domain>/<topic>"`.   Otherwise, run the query script:
-   ```bash
-   session-start >/dev/null 2>&1
-   source "${TMPDIR:-/tmp}/plugin-data.env" 2>/dev/null
-   echo '{"domains":["<domain>"],"topics":["<topic>"],"keywords":["<keywords>"]}' \
-     | python $CONTEXT_OS_PLUGIN_ROOT/scripts/vault_query.py --vault-root . --max-candidates 5
-   ```
+1. Find existing articles on the same topic with `mcp__contextos__query_blended`, using a short phrase describing the topic and `path_prefix: "memory/wiki"` (narrow to `memory/wiki/<domain>` when the domain is clear).
 
-2. If an existing article covers the topic: read it and integrate new claims.
-   - Add new `**Source:**` entries.
-   - Update `## Key Takeaways` with new insights.
-   - Flag contradictions in `## Open Questions`.
+2. If an existing article covers the topic: read it and integrate new claims with `mcp__contextos__note_update` or `mcp__contextos__fs_edit_file`, carrying the hash you read.
+   - Add each new source to the frontmatter's `sources`, and move any `**Source:**` line in the body into it.
+   - Update the summary and `## Details` with the new claims.
+   - Raise each contradiction as a question task with `mcp__contextos__base_record_create` against `memory/tasks.base` (`prefix: Q`, following `templates/task-question.md`, naming the conflicting sources), and link it under the article's `## Open Questions`, which holds only such links.
 
-3. If no existing article: create `memory/wiki/<domain>/<topic>/<slug>.md`. Check whether `templates/wiki-article.md` exists in the vault. If it does, read it and use its frontmatter and section structure as the template. If it does not exist, use the fallback structure below:
+3. If no existing article: create `memory/wiki/<domain>/<topic>/<slug>.md` with `mcp__contextos__note_create`. Check whether `templates/wiki-article.md` exists in the vault. If it does, read it and use its frontmatter and section structure as the template. If it does not exist, use the fallback structure below:
    ```markdown
    ---
    domain: <domain>
@@ -117,55 +98,24 @@ For each source (a raw extract written in Step 2, or a `memory/research/` file c
 
    [One-paragraph summary.]
 
-   ## Key Takeaways
-
-   - [Bullet]
-
    ## Details
 
    [Substantive content.]
-
-   ## Open Questions
-
-   - [Gaps, unresolved contradictions]
-
-   **Source:** [memory/raw/...](../../raw/...)
    ```
-   When the source is a `memory/research/` file, cite it directly in `sources:` and `**Source:**` instead of a `memory/raw/` path.
+   When the source is a `memory/research/` file, list it directly in `sources` instead of a `memory/raw/` path. Raise any gap or unresolved contradiction as a question task, as above, and add an `## Open Questions` section holding only the links to them.
 
-4. Update wiki indexes. If MCP is available, call `mcp__contextos__vault_index_rebuild` with `path: "memory/wiki/<domain>/<topic>"`. Otherwise, run the index updater as a single command as each `Bash` call is a separate shell invocation:
-   ```bash
-   session-start >/dev/null 2>&1
-   source "${TMPDIR:-/tmp}/plugin-data.env" 2>/dev/null
-   python $CONTEXT_OS_PLUGIN_ROOT/scripts/update_wiki_index.py \
-     --vault-root . \
-     --touched memory/wiki/<domain>/<topic>/<article>.md
-   ```
 
 ### Step 4: archive inbox file
 
 This step only applies to files sourced from `inbox/`. `memory/research/` files are never archived or moved (append-only at their original path per `vault-conduct.md`); operator-named files from `args.files` that live outside `inbox/` are left exactly where the operator put them.
 
-Once an inbox file has been fully processed (raw extract written, wiki updated), move it from `inbox/` to `processed/` and update both index files.
-
-If MCP is available: call `mcp__contextos__fs_move_file` with `source: "inbox/<filename>"` and `destination: "processed/<filename>"`, then call `mcp__contextos__vault_index_rebuild` with `path: "inbox"` and again with `path: "processed"` to refresh both indexes. Otherwise, run the inbox script:
-
-```bash
-session-start >/dev/null 2>&1
-source "${TMPDIR:-/tmp}/plugin-data.env" 2>/dev/null
-python $CONTEXT_OS_PLUGIN_ROOT/scripts/vault_inbox.py \
-  --vault-root . \
-  --file <filename>
-```
+Once an inbox file has been fully processed (raw extract written, wiki updated), move it with `mcp__contextos__fs_move_file` from `<vault>://inbox/<filename>` to `<vault>://processed/<filename>`. The server updates both folders' indexes.
 
 Repeat for each inbox file processed in this session. Do not archive files that failed to process; leave them in the inbox and report the failure in Step 6.
 
 ### Step 5: log
 
-If MCP is available, call `mcp__contextos__vault_log_append` with `entry: "ingest | <n> file(s) processed"` and `files` set to the raw and wiki paths written. Otherwise, append to `memory/log/YYYY/MM/YYYY-MM-DD.md`:
-```
-HH:MM | agent | ingest | <n> file(s) processed | files: [raw slugs], [wiki paths]
-```
+Call `mcp__contextos__vault_log_append` with `entry: "ingest | <n> file(s) processed"` and `files` set to the raw and wiki paths written.
 
 ### Step 6: report
 
@@ -177,4 +127,3 @@ State: files processed, raw extracts written, wiki articles created or updated, 
 
 - `memory/raw/` and `memory/research/` files are immutable after creation. Never edit them.
 - Never cite inbox files directly in wiki articles. Always process to raw first. `memory/research/` files are the exception: cite them directly, never copy or move them into `memory/raw/` or an inbox.
-- Update the parent index.md whenever a new wiki article or folder is created.

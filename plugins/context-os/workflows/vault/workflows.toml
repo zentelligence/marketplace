@@ -1,0 +1,4 @@
+# The workflows of the vault package, and the files every one of them may import or read, relative to this folder.
+workflows = ["scaffold", "update", "health"]
+modules = ["modules/helpers.rhai", "modules/layout.rhai"]
+templates = ["templates"]

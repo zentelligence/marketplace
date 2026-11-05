@@ -53,37 +53,47 @@ If the session involved coding work and the vault has a top-level `coding/` fold
 - a concrete failure mode, fix pattern, tool behaviour, or verification lesson,
 - specific enough to understand without rereading the whole session.
 
-If so, append it to `coding/YYYY/MM/YYYY-MM-DD-<agent>.md` using the format defined in `coding/index.md`. Reference this file's path in Step 4 below rather than inlining the lesson into the session capture.
+If so, append it with ContextOS MCP to `<vault>://coding/YYYY/MM/YYYY-MM-DD-<agent>.md` (`note_create` for a new day file, `fs_edit_file` to append to an existing one) using the format defined in `coding/index.md`. Reference this file's path in Step 4 below rather than inlining the lesson into the session capture.
 
 ### Step 4: write capture file
 
-Use the capture script for consistent structure:
+Write the capture with `mcp__contextos__note_create` to `<vault>://memory/sessions/YYYY/MM/YYYY-MM-DD-HHMM-<slug>.md`, using the operator's local date and time from `vault_info`'s `time_zone`. `note_create` never overwrites, so a refusal because the path exists means a capture with that name is already there: choose another slug rather than replacing it.
 
-```bash
-session-start >/dev/null 2>&1
-source "${TMPDIR:-/tmp}/plugin-data.env" 2>/dev/null
-python $CONTEXT_OS_PLUGIN_ROOT/scripts/write_session_capture.py \
-  --vault-root . \
-  --slug "<session-slug>" \
-  --session-type "<planning|research|build|review|other>" \
-  --primary-role "<role if applicable>" \
-  --entities-touched "<entity slugs if applicable>" \
-  --outcome "<one paragraph summary>" \
-  --decision "<decision 1>" \
-  --decision "<decision 2>" \
-  --open-thread "<open thread 1>" \
-  --memory-update "<proposed update 1>" \
-  --coding-lesson-file "<coding/YYYY/MM/YYYY-MM-DD-<agent>.md, if Step 3 recorded one>"
-```
+Pass these frontmatter fields as structured values:
 
-The script writes to `memory/sessions/YYYY/MM/YYYY-MM-DD-HHMM-<slug>.md`. Omit `--coding-lesson-file` entirely if Step 3 did not apply or found nothing worth recording.
+| Field | Value |
+| --- | --- |
+| `type` | `session` |
+| `session_type` | `planning`, `research`, `build`, `review`, or `other` |
+| `primary_role` | The role in use, if any |
+| `primary_hats` | List of hats used, if any |
+| `entities_touched` | List of entity slugs |
+| `projects_touched` | List of project slugs, if any |
 
-For any additional proposed memory updates with specific file paths and changes, append them to the `## Memory updates proposed` section in this format. If MCP is available, prefer `mcp__contextos__fs_edit_file` for this append (anchor on the section heading), falling back to the `Edit` tool if MCP is unavailable or the call errors:
+Use this body, writing "None recorded." or "None proposed." under any empty section rather than omitting it:
 
 ```markdown
-### [target file path]
+## Outcome
 
-> [Proposed change: what to add, update, or remove]
+<one paragraph summary>
+
+## Decisions
+
+- <decision>
+
+## Open threads
+
+- <open thread>
+
+## Memory updates proposed
+
+### <target file path>
+
+> <Proposed change: what to add, update, or remove>
+
+## Coding lesson
+
+- <coding/YYYY/MM/YYYY-MM-DD-<agent>.md, only if Step 3 recorded one; otherwise omit this section>
 ```
 
 ### Step 5: hand off
@@ -111,7 +121,7 @@ Example:
 
 ### memory/wiki/technology/ai-tools/claude.md
 
-> Create new article on Claude Cowork plugin architecture. Source: this session.
+> Create new article on the vault's task delegation model. Source: this session.
 > Key takeaways: [...]
 ```
 

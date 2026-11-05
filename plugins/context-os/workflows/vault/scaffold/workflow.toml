@@ -1,0 +1,91 @@
+name = "Scaffold a vault"
+entry = "scaffold.rhai"
+
+[mcp_servers]
+allow = ["contextos"]
+
+[mcp_tools]
+allow = [
+    { server = "contextos", tool = "fs_get_file_info" },
+    { server = "contextos", tool = "fs_attach_file" },
+    { server = "contextos", tool = "fs_write_file" },
+    { server = "contextos", tool = "fs_create_directory" },
+]
+
+[[input]]
+name = "vault"
+kind = "vault"
+
+[[input]]
+name = "created_at"
+kind = "datetime"
+
+[[input]]
+name = "entity_slug"
+kind = "string"
+required = false
+
+[[input]]
+name = "entity_name"
+kind = "string"
+required = false
+
+[[input]]
+name = "operator"
+kind = "string"
+required = false
+
+[[input]]
+name = "members"
+kind = "array"
+required = false
+[input.items]
+kind = "object"
+[[input.items.properties]]
+name = "function"
+kind = "string"
+[[input.items.properties]]
+name = "name"
+kind = "string"
+
+[[output]]
+name = "result"
+kind = "object"
+[[output.properties]]
+name = "folders_created"
+kind = "array"
+[output.properties.items]
+kind = "string"
+[[output.properties]]
+name = "files_created"
+kind = "array"
+[output.properties.items]
+kind = "string"
+[[output.properties]]
+name = "files_skipped"
+kind = "number"
+[[output.properties]]
+name = "members_created"
+kind = "array"
+[output.properties.items]
+kind = "string"
+[[output.properties]]
+name = "members_skipped"
+kind = "array"
+[output.properties.items]
+kind = "string"
+[[output.properties]]
+name = "workspaces_created"
+kind = "array"
+[output.properties.items]
+kind = "string"
+[[output.properties]]
+name = "team_added"
+kind = "array"
+[output.properties.items]
+kind = "string"
+[[output.properties]]
+name = "errors"
+kind = "array"
+[output.properties.items]
+kind = "string"

@@ -1,0 +1,392 @@
+# The vault package: scaffolds a new vault, keeps an existing one in step with the plugin, and checks its knowledge
+# notes, as saved shared jobs the vault skill runs with `contextos-web jobs run --shared`. This file describes the
+# release only: its version is the package's own, stepped by ContextOS's version rules whenever the package changes, and
+# `digest` is the SHA-256 over every other file in this folder (tests/test_vault_package.py checks it;
+# tools/package_digest.py writes it). `workflows.toml` lists the workflows and declares what they share.
+name = "contextos-vault"
+version = "0.1.2"
+digest = "sha256:be58e2fe8d55e2ef3d1e3cb4858932653fda4db2c0a5d1ed62b5def92e1bf339"
+
+[[files]]
+path = "health/health.rhai"
+hash = "8fbb380b5d9b50c50ed740664ff1a524da392c47b2c9b570ccd04c443d00f992"
+
+[[files]]
+path = "health/tests/current.toml"
+hash = "c9c4cff671b06ea67dab440806b85e92dd2133173d63453431542b9dc061b3d4"
+
+[[files]]
+path = "health/workflow.toml"
+hash = "1c4d1ef07403b1112c513ca7fb4334bcf71c703903bbd7e31c4f968dd403f0cb"
+
+[[files]]
+path = "modules/helpers.rhai"
+hash = "5819188c3da3f8af0e9f9e4ad2813f9bab889e3079c639ecb8a856996d17ba0d"
+
+[[files]]
+path = "modules/layout.rhai"
+hash = "cf8d2d894b9d9f105f5bcb68c0e4fa48ac6e87305fb1ef96f731467a323e5073"
+
+[[files]]
+path = "scaffold/scaffold.rhai"
+hash = "af6c9587a586ec820452d0234a3bc713e410490eb07e4f225562f742cd71608b"
+
+[[files]]
+path = "scaffold/tests/current.toml"
+hash = "b73276912c6c9b120a4625e011bd5322fa0b5a1b2c0b81ec9c4d00e835141940"
+
+[[files]]
+path = "scaffold/workflow.toml"
+hash = "9a5898d60b68a9ade826af16d31af968e909d7f70e7ebeda20bed199632d770e"
+
+[[files]]
+path = "templates/entity/profile.md"
+hash = "40b53af003d121dd60ecef59a96d3c39333fa0ff54b02f552e35e6fc2b0f7ac6"
+
+[[files]]
+path = "templates/seeded/.contextos/journal.toml"
+hash = "f192b491dee169b924bf94372e0509cc95c8180331ffc3eda44f2ca83e4c5ffe"
+
+[[files]]
+path = "templates/seeded/.contextos/tasks.toml"
+hash = "ca4de5b2a4ed167cee530bdefeaab3458c51de7821569f6ddf6adf261aa49a99"
+
+[[files]]
+path = "templates/seeded/AGENTS.md"
+hash = "f5ee70ee7648911017f328173913f5664731ca70b508aed686b00d26414e2a9b"
+
+[[files]]
+path = "templates/seeded/CLAUDE.md"
+hash = "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49"
+
+[[files]]
+path = "templates/seeded/memory/decisions.md"
+hash = "0ea38050f59fc25f51769b1f66d036a53cb3f69280dd724a6a96f2b962223189"
+
+[[files]]
+path = "templates/seeded/memory/entities/personal.md"
+hash = "dcbf53ad64f3e8131deb82e3f85a82c6bb8a26d1d9b18d19677a0d654361b961"
+
+[[files]]
+path = "templates/seeded/memory/events.md"
+hash = "bc9336de1380106c86a1bd0e04c62f2cd1eb043ab3fd949e77f9ee1a2b7e9d66"
+
+[[files]]
+path = "templates/seeded/memory/glossary.md"
+hash = "5cffdf113554061e8b6830522fa64b81e2d9ca330e7c64e0067667d606818d97"
+
+[[files]]
+path = "templates/seeded/memory/identity/communication-style.md"
+hash = "53613592c5a2944afc21d7ffca34bb6d88d6c4de7f0f8647e0d0719f1c93a5c9"
+
+[[files]]
+path = "templates/seeded/memory/identity/identity.md"
+hash = "8bdb9de2eac00e2dc7a39a205a93dded11534a3656d1607bc7fdf77d0c3d8b75"
+
+[[files]]
+path = "templates/seeded/memory/identity/voice-profile.md"
+hash = "11eda509e49f5b5e601f6270a83cc2e96fc589440d5fbcc65bf3691d4d274ab3"
+
+[[files]]
+path = "templates/seeded/memory/identity/who-am-i.md"
+hash = "06f6d0413321f40c2fad0098a40e166fd9d477d41345aaa5e2a64774b6085580"
+
+[[files]]
+path = "templates/seeded/memory/operating/anti-patterns.md"
+hash = "7abbf31b620980f46456fff17b0560682b0840827d5047d34134d87d642d1bdc"
+
+[[files]]
+path = "templates/seeded/memory/operating/autonomy-policy.md"
+hash = "2e8eb9d0ae10ca7e3b8c6edeb297037b8f283e24e5118765cd31c6bac9977452"
+
+[[files]]
+path = "templates/seeded/memory/tasks.md"
+hash = "aff665a560e2c8a2c778b5bd431546eb20f4e9990042ef91c866c0cd87d84b22"
+
+[[files]]
+path = "templates/seeded/registry/instructions/global.md"
+hash = "b08595fb9b88ebe05392e8151eef685dbb4e0025fddca130a2e8e73a8764f06e"
+
+[[files]]
+path = "templates/shipped/.contextos/fences.toml"
+hash = "4238a50c6f5f584589842b5ad481bd03454487301a8add5b4e574f0ac6ac0ffa"
+
+[[files]]
+path = "templates/shipped/memory/decisions/vd-001-one-file-per-decision-or-question.md"
+hash = "38ecc5db62810d0dfa9f3fb208f1ab599be74a90058ff3dc96c311ee804775c7"
+
+[[files]]
+path = "templates/shipped/memory/decisions/vd-002-vault-decisions-and-questions-share-one-register.md"
+hash = "189f9f75445145ec89b277001d283d918c4fff8f53df894beaa8a07e8feab1bb"
+
+[[files]]
+path = "templates/shipped/memory/decisions.base"
+hash = "ee8a492f4d24926a265b55ac04536d34eef82dea7a71cfe61e7d44e06639b36c"
+
+[[files]]
+path = "templates/shipped/memory/designs/markdown-extension.md"
+hash = "5a94a58ef21eaabd7690706a8a1c92bf67595135afc10c28f684139ab7db0cfd"
+
+[[files]]
+path = "templates/shipped/memory/designs/prompts-roles-hats.md"
+hash = "2687d762a35176d31c45e6012ee2b9253096024c85cfab33ae790ad808947eb1"
+
+[[files]]
+path = "templates/shipped/memory/events.base"
+hash = "85d49dfe8e9ddd0d60e58eed73827488197f6bbaee236d6955b180c7902d6a2e"
+
+[[files]]
+path = "templates/shipped/memory/jobs.base"
+hash = "4f509684493769acd08cfc503a9ff9234e85dde21cd073c7b75b5499227819f8"
+
+[[files]]
+path = "templates/shipped/memory/operating/current-priorities.md"
+hash = "023e5f162fe8f03504a53b6d891147936476fd775e6a7344ecf185753dd18615"
+
+[[files]]
+path = "templates/shipped/memory/operating/quality-standards.md"
+hash = "5e3b2cdf7a5f004b0468725b2b9d34c368e5f2acebfa900f0ccdb12edb863a96"
+
+[[files]]
+path = "templates/shipped/memory/operating/rhythm.md"
+hash = "b313af24194304076b1229f1c1301a33307673f8ee872901e856f44fb14eed98"
+
+[[files]]
+path = "templates/shipped/memory/operating/vault-conduct.md"
+hash = "1027ce508ca38775b178fcc8d4b672e3dad7a625e9d0b6bf6ecf07bb6ad5ad7f"
+
+[[files]]
+path = "templates/shipped/memory/operating/vault-decisions.md"
+hash = "95046ce6730042c4e288332958fddc3b8486bae4ed469c2ccd06d8a2e460cb26"
+
+[[files]]
+path = "templates/shipped/memory/operating/vault-operations.md"
+hash = "8045470da870a9fa5a45ab0b60742c16a64592f73976054448225a779be75291"
+
+[[files]]
+path = "templates/shipped/memory/tasks.base"
+hash = "f8881acdebc023019305d7573cb4fae9e7b9fa7a7aaadd2a57cda1d45d35e76a"
+
+[[files]]
+path = "templates/shipped/registry/events/agent.delegated.md"
+hash = "1d4d2725dcd732f14b6e46a9c70932ad7d6c20ce7c0c418e5411d814439844cc"
+
+[[files]]
+path = "templates/shipped/registry/events/job.failed.md"
+hash = "501bcc194f3d68223caed2f63872a5bdddadf0e88ec7312411b79a640d43420d"
+
+[[files]]
+path = "templates/shipped/registry/events/job.recovered.md"
+hash = "c723e38edd83596070c96a80377014db51802b6237bc7bb9fb134d16bc9bfc39"
+
+[[files]]
+path = "templates/shipped/registry/events/job.retired.md"
+hash = "9053d92176a4763d9db5aa65fa4847741f0e42b08c53a513cfb7bc53774faa39"
+
+[[files]]
+path = "templates/shipped/registry/events/job.suspended.md"
+hash = "6d38de20441bffa41b4fb1cbe61a1cdf2738846c69b317ed0496df143b176f7e"
+
+[[files]]
+path = "templates/shipped/registry/events/session.run-finished.md"
+hash = "e40731aa8f28e74dae9faec49de211eeb533cf69a4928c1c92c9ede0cf164368"
+
+[[files]]
+path = "templates/shipped/registry/events/session.run-started.md"
+hash = "824bfaa41a95729d2b6baddf6346c9e6417249a9bc8ccc5c7645932f43bbd9e7"
+
+[[files]]
+path = "templates/shipped/registry/hats/critic.md"
+hash = "2aa2274b676cef4f7d93114a44affee51ff3d3890b25983faab61266e1610d82"
+
+[[files]]
+path = "templates/shipped/registry/hats/definer.md"
+hash = "fd26d8047bd8e77ee878b912eb85bf9dfe1291b873d19303f2d2b4466c370f48"
+
+[[files]]
+path = "templates/shipped/registry/hats/planner.md"
+hash = "e16df89f0fdbcfc033a321fc27526b1010397c12ac1bfdd076e885e28d3ccd67"
+
+[[files]]
+path = "templates/shipped/registry/hats/refiner.md"
+hash = "b70ce063db6fe6a16d54cad94dc5112eebae0bee294b9bd75ceaeae311df3665"
+
+[[files]]
+path = "templates/shipped/registry/hats/solver.md"
+hash = "caa3fe2c8ac9be3097f6d4bc710200d8de11cb1db4e84a8df025ed7e993b8dbc"
+
+[[files]]
+path = "templates/shipped/registry/hats/synthesiser.md"
+hash = "fdb0d496371fb50d2a7a24783d85dbd8126df8f7475a3c28de9de5e28c83c565"
+
+[[files]]
+path = "templates/shipped/registry/prompts/framework.md"
+hash = "031a333850ebea3d1dcc21c657d8a4a23828e0f1c532d8fba4fd4be651091aa6"
+
+[[files]]
+path = "templates/shipped/registry/prompts/general/standard.md"
+hash = "26793d03aeff542dbce76f4ff49e917e79bd1414342f6d03af4398c8ef690fee"
+
+[[files]]
+path = "templates/shipped/registry/roles/analyst.md"
+hash = "e623a577574c844a746af7c5874b121956818d56d59a2719a1088c32c4711d19"
+
+[[files]]
+path = "templates/shipped/registry/roles/architect.md"
+hash = "25651c2ed7203d94e1f241c7a8d616815922794c6b613c44fbd12e5cb31ea423"
+
+[[files]]
+path = "templates/shipped/registry/roles/auditor.md"
+hash = "495906f3bb5b38f8fdef14e4d6806d6f09084b23d1a0bbd5851d9597e6e28ce2"
+
+[[files]]
+path = "templates/shipped/registry/roles/engineer.md"
+hash = "e6726642e463b9f4556a808f301008926a49a5f5b6eacfe852fef767159d1ae0"
+
+[[files]]
+path = "templates/shipped/registry/roles/strategist.md"
+hash = "b1ce17ae798021107847a998e14dbccc649d965d9fd3def13566508469d76d32"
+
+[[files]]
+path = "templates/shipped/registry/scripts/utility/README.md"
+hash = "750870062ce97c75d56a4af0d4736e5b1998ec9d008a82cd112a127c75c7a742"
+
+[[files]]
+path = "templates/shipped/registry/scripts/utility/backup-obsidian-vault-macos.sh"
+hash = "24cffd4f42bfea1fb7e7ada01a6f385ffc2f2b4943388c677b248333f67b00f3"
+
+[[files]]
+path = "templates/shipped/registry/scripts/utility/backup-obsidian-vault.ps1"
+hash = "d67792624fef7192df07bf4b50c8baf21267646f12b5cd053f34dfd4d79fdfb4"
+
+[[files]]
+path = "templates/shipped/registry/scripts/utility/install-backup-schedule.ps1"
+hash = "26eddb423f1f52808c14c3a7cf382bcd56b09946c95d6b2dddd2f6c67b293193"
+
+[[files]]
+path = "templates/shipped/registry/scripts/utility/install-backup-schedule.sh"
+hash = "5f94dc2ea3cb6a05f510241f0b916df522ee253672784df42abbd05cbca86416"
+
+[[files]]
+path = "templates/shipped/templates/daily-journal.md"
+hash = "5a44f1ff2d7a667db1bb7571c3a41c91169d9d2616b7183281841245504bc4fb"
+
+[[files]]
+path = "templates/shipped/templates/distil-transcript.md"
+hash = "0f5d811decb30e24af60e05788d4163db5779e5db5b0e2ae71a993f433dde6ed"
+
+[[files]]
+path = "templates/shipped/templates/entity-summary.md"
+hash = "d3a51195838568fbdd8fe0e2efb80b570f19809f4a929cd1de94bb97d68196c3"
+
+[[files]]
+path = "templates/shipped/templates/event.md"
+hash = "632ec599c98cac486d00f5740cad6bab6ed64d5800ac9e71ffa403ee886a8c24"
+
+[[files]]
+path = "templates/shipped/templates/insight-note.md"
+hash = "234087f359c4d7c6f9a8bef25cbbebbea5ed39aa2eff879589a025406f5970b7"
+
+[[files]]
+path = "templates/shipped/templates/member-assurance.md"
+hash = "0df15d623f28e9fbe4e901a749ba969a220050c70d91185aa33d2504b0f0f74b"
+
+[[files]]
+path = "templates/shipped/templates/member-chief-of-staff.md"
+hash = "dc5b611733c2e0573626fb55e6adab75dcb63dd2911fe9e1a9c7a07dbb606b6f"
+
+[[files]]
+path = "templates/shipped/templates/member-communications.md"
+hash = "60282c6f1640094d30bd4658b4b977d92b6293fd7235f8acd2ceae6229881358"
+
+[[files]]
+path = "templates/shipped/templates/member-librarian.md"
+hash = "e28200d27986d81fb79ba0bc9c470f1cc3e8b48a32255ea67e99ea1d807e67e8"
+
+[[files]]
+path = "templates/shipped/templates/member-support.md"
+hash = "47ff40fbac7477ed72203622842393cc68916ff744a0b9d25f8a7223b4f223ff"
+
+[[files]]
+path = "templates/shipped/templates/member-technologist.md"
+hash = "7f513d69b58a60abcc347f641039d22bc2715c8fd78c16b021951380b009e5c8"
+
+[[files]]
+path = "templates/shipped/templates/raw-article.md"
+hash = "4435c018c21790f10c2a05e20a5cc04c6528a8f0b0d5e55ed20e62efb538940f"
+
+[[files]]
+path = "templates/shipped/templates/registry-agent-member.md"
+hash = "56d4d4a1e2a161f47fa177a8817286934dcfe6f8d2f85e27b562245cab93570b"
+
+[[files]]
+path = "templates/shipped/templates/registry-agent-specialist.md"
+hash = "94f1fa3cee8eded70752109c2da90fd01c72b62309820af8dcc7bd905c3dd049"
+
+[[files]]
+path = "templates/shipped/templates/registry-event-kind.md"
+hash = "f9e90aacdd722a5f132bf9b25d1896d6baf4442ed46185a822483a5ca3eeb4dd"
+
+[[files]]
+path = "templates/shipped/templates/registry-hat.md"
+hash = "b3b2d928122f9352d44457045242ecb706777e74defd8e2a513f856767003f41"
+
+[[files]]
+path = "templates/shipped/templates/registry-prompt.md"
+hash = "e161a18080fe365c0b9555820c9926fa064ea05c0962499b443a1d7edc0b7cea"
+
+[[files]]
+path = "templates/shipped/templates/registry-role.md"
+hash = "c8a1d899d1d83664e86d5cc68cb3c6509acb2e59ca76b970da3a880a7c79dcef"
+
+[[files]]
+path = "templates/shipped/templates/registry-skill.md"
+hash = "34edf533004d9502bb07186f10543d98ae0b8a9f3496570cef87434c2f00f346"
+
+[[files]]
+path = "templates/shipped/templates/registry-vault-decision.md"
+hash = "44cf0510909b2fb2c8ed791c9fbc51f7af1212db4168f55622698416a158edeb"
+
+[[files]]
+path = "templates/shipped/templates/registry-vault-question.md"
+hash = "387b4feec77dc2d2f2ced70fd40313ef5c1cb3434d65c212a897dc7fe3759ca2"
+
+[[files]]
+path = "templates/shipped/templates/research-article.md"
+hash = "0bfbe92e2841cf2fbe0d72f13a2911ef13c9654d0d12b6d2bc18bd5e52becba2"
+
+[[files]]
+path = "templates/shipped/templates/task-decision.md"
+hash = "eb96aab30b4a827d5dcf6c5f85ae0e5fbf50c120a9a6fabf9e6334e91c9a799b"
+
+[[files]]
+path = "templates/shipped/templates/task-question.md"
+hash = "fadb2b5214723e6591785c670b0aef8f1480a74061ed26a168577fae01b47136"
+
+[[files]]
+path = "templates/shipped/templates/task.md"
+hash = "f9c05a8a7ac460e40966187c514e26d4c430c0611c7eda05cdc669b4b926d10b"
+
+[[files]]
+path = "templates/shipped/templates/unique-note.md"
+hash = "72dd647c787bfe12e6a80e3a328712c840dcc7ede5dce7a3526b5716601018ca"
+
+[[files]]
+path = "templates/shipped/templates/wiki-article.md"
+hash = "ba9fc61e6acca88cc219d5c29ca83ebe18f14f2ef9d2796489e5a6cad22d5c50"
+
+[[files]]
+path = "update/tests/current.toml"
+hash = "de20c92d64e1d3c3fb68cb6bdf4d308ffcc74b021db98606b55925b1df2e5fc0"
+
+[[files]]
+path = "update/update.rhai"
+hash = "1c5c5ad4ac6d220c3f48c8caceae05ea4b3eb84c6ed50ea034dc8abc285691ac"
+
+[[files]]
+path = "update/workflow.toml"
+hash = "9a1b83ef18aaf05f7ea3336ebed4a9aa3f079128b4f6ce12c206ff91a42b31be"
+
+[[files]]
+path = "workflows.toml"
+hash = "469e395b19720ffcea875733005bb2e24cc6c5a56fbc2891ecb39ec339d1f8a5"

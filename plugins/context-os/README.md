@@ -8,10 +8,11 @@ Personal knowledge vault, powered by ContextOS.
 
 | Step | Action |
 | ---- | ------ |
-| 1 | Open this vault in Obsidian for human-readable access |
-| 2 | Open this vault in Claude Cowork for AI-operated access |
-| 3 | Run `/vault init` to complete first-run setup |
-| 4 | After init, paste the block from `memory/operating/global-instructions.md` into Cowork Settings → Edit Global Instructions |
+| 1 | Install the ContextOS MCP server (`contextos`) and register this vault folder with it |
+| 2 | Install ContextOS Web (`contextos-web`) and configure it with the ContextOS MCP server, named `contextos` |
+| 3 | Add the ContextOS MCP server and this plugin to Claude Code or Codex |
+| 4 | Run `/vault init` to complete first-run setup |
+| 5 | Open this vault in Obsidian for human-readable access |
 
 ---
 
@@ -34,7 +35,7 @@ Personal knowledge vault, powered by ContextOS.
 | `outbox/` | Drop zone for outbound files, shared across all entities. Ephemeral. |
 | `processed/` | Post-ingestion archive, shared across all entities. Ephemeral. |
 | `<entity>/` | per <entity> detail, organised however the operator prefers. |
-| `registry/` | Prompts, roles, hats, agents, scripts, and skills registry. |
+| `registry/` | Prompts, roles, hats, agents, skills, apps, and workflows registry. |
 | `standards/` | Referenceable operating standards. |
 | `templates/` | Reusable file templates. |
 
@@ -42,7 +43,7 @@ Personal knowledge vault, powered by ContextOS.
 
 ## Vault operations
 
-All vault operations are triggered via the `vault` skill command routed to appropriate workflow detail. Some operations are support by ContextOS MCP server where available, or Python scripts as a fallback. 
+All vault operations are triggered via the `vault` skill command, which routes each to its workflow. Every operation reads and writes the vault through the ContextOS MCP server.
 
 | Command | Purpose |
 | ------- | ------- |
@@ -52,7 +53,7 @@ All vault operations are triggered via the `vault` skill command routed to appro
 | `/vault query <question>` | Answer a question using vault knowledge. |
 | `/vault capture` | End-of-session capture. Proposes memory updates. |
 | `/vault consolidate` | Apply approved memory updates from a capture file. |
-| `/vault lint` | Audit wiki quality. Report only. |
+| `/vault health` | Vault health from `doctor` plus knowledge quality. Runs unattended: fixes delegated to the librarian, decisions escalated to the chief of staff. |
 | `/vault distil-transcript` | Extract a transcript to memory/raw/. |
 | `/vault log <entry>` | Append one manual entry to the daily operation log. |
 | `/vault update` | After a plugin upgrade. Add new scaffold content, refresh unmodified shipped files. |
@@ -67,16 +68,31 @@ Registry operations run inline in any prompt:
 | `/hat create <slug>` | Define a new operator hat in `registry/hats/`. |
 | `<slug>:agent` | Delegate the task to an operator agent, run as a sub-agent. |
 | `/agent create <slug>` | Define a new operator agent in `registry/agents/`. |
+| `/dispatch [<slug>]` | Work the task list: claim each actionable task assigned to an agent member and start that member's sub-agent on it, three at a time, until none remain. Built to run as a scheduled task from the member's workspace, `.contextos/workspaces/<slug>/`. |
 
-Agent definitions in `registry/agents/` are the source of truth; a generated shim in `.claude/agents/` makes each one harness-discoverable and is regenerated on drift. Plugin authors building on the agent skill: see [docs/01-agent-contract.md](docs/01-agent-contract.md) for the binding definition schema and invocation grammar.
+Every vault ships with a generic V-sequence build set: the roles strategist, analyst, architect, engineer, and auditor, and the hats definer, planner, solver, critic, refiner, and synthesiser. Edit them freely; `/vault update` restores any that are missing.
+
+ContextOS Web apps, workflows, and jobs are developed by their own skills. ContextOS Web serves the apps, and validates, schedules, and runs the workflows and jobs with no agent session involved:
+
+| Command | Purpose |
+| ------- | ------- |
+| `/app list\|create\|update` | Build and maintain interactive apps in `registry/apps/`, verified on the ContextOS Web host. |
+| `/workflow list\|create\|update` | Build and maintain workflows in `registry/workflows/`, or shared packages for the host's package store, proved with dry runs. |
+| `/job list\|create\|update` | Author saved jobs, each owned by a team member, and take them through validation and a dry run to registration. The operator enables them. |
+
+Agent definitions in `registry/agents/` are the source of truth; the `agent` skill reads a definition through ContextOS MCP each time it delegates. Plugin authors building on the agent skill: see [docs/01-agent-contract.md](docs/01-agent-contract.md) for the binding definition schema and invocation grammar.
 
 ---
 
-## ContextOS MCP (optional)
+## ContextOS MCP (required)
 
-ContextOS Server (`contextos`) is an optional MCP server that operates this vault directly: safe filesystem access, indexing, operation logging, Git recovery, and ranked or graph-based query, all scoped to this vault's root. It is distributed as a separate per-platform binary; installing this plugin does not install or register it.
+ContextOS Server (`contextos`) is the MCP server through which every skill reads and writes this vault: safe filesystem access, indexing, operation logging, Git recovery, and ranked or graph-based query, scoped to the vault roots it is configured with. It is distributed as a separate per-platform binary; installing this plugin does not install or register it.
 
-If it is configured in Claude Desktop (for Claude Cowork access) or Claude Code's MCP settings against this vault, every vault skill automatically prefers its tools over the equivalent Python script, falling back to the script for anything the server does not cover or is not currently reachable for. Nothing above needs to change to take advantage of it, and nothing breaks without it: the vault operates exactly as described in this README either way. Configuring the server against a vault root is a manual step; this plugin does not automate it.
+The plugin works in Claude Code and Codex. Agent sessions usually reach the vault through the server rather than opening the vault as their working folder, so the server must be configured in each agent app you use. If a skill cannot reach it, the skill reports the error and stops; there is no fallback to writing vault files directly. `AGENTS.md` at the vault root holds the vault's instructions for every agent host, and `CLAUDE.md` imports it for Claude Code.
+
+`/vault init`, `/vault update`, and `/vault health` do their deterministic work through the vault package, `contextos-vault`, which this plugin ships in `workflows/vault/`: the vault skill installs it into ContextOS Web from that folder and runs its `scaffold`, `update`, and `health` workflows as saved shared jobs with `contextos-web jobs run --shared`, so ContextOS Web's command line must be installed for those three commands. It is the one place a session runs ContextOS Web; everything else it runs on its own.
+
+The `mcp-tools` skill (`/mcp-tools`) captures best practice for using the server's tools well: reading whole files with `fs_attach_file`, conflict-safe writes, choosing between the search tools, keyed records and frontmatter links, and what the server maintains on its own. It is informational, so it changes how tools are used, not what any vault command does.
 
 ---
 

@@ -1,0 +1,17 @@
+# How ContextOS Web's Journal screen files this vault's daily entries, and which sections of templates/daily-journal.md
+# it treats specially. This is the starting set; customise it in ContextOS Web's Vault Settings, Journal.
+#
+# The screen shows one tab per `##` section of a day's entry, whatever the template holds. Name a section by its
+# heading text, without the `#` marks. Remove a section setting to turn it off.
+
+journal_dir = "journal"
+template_path = "templates/daily-journal.md"
+date_format = "YYYY/MM/YYYY-MM-DD"
+date_structure_side = "right"
+
+# Creating a task lists it under this section of the day's entry; closing one lists it under the other.
+task_opened_section = "Loops opened today"
+task_closed_section = "Loops closed today"
+
+# Sections shown but never offered for editing: agent sessions append to these.
+read_only_sections = ["Activity Log"]

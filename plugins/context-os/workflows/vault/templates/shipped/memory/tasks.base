@@ -1,0 +1,178 @@
+# Live views over the task records in memory/tasks/ at any depth, one note per task, built
+# from each note's frontmatter. Requires Obsidian's Bases core plugin; ContextOS Web's Tasks
+# screen and the contextos MCP base_query tool read the same views. memory/tasks/index.md is
+# the plain-Markdown fallback. Edit via the contextos MCP base_apply tool where available, not
+# by hand, to keep filters, views, and property display names in sync.
+#
+# A task's lifecycle is its `state` alone, and each task_type has its own: an action is backlog,
+# next, doing, waiting, review, done, or dropped; a decision proposed, adopted, or dropped; and a
+# question open, answered, or dropped. done, adopted, answered, and dropped are closed.
+# A task is blocked when a task in its depends_on is still open. That is
+# worked out from the linked tasks' own states, which a Base filter cannot read, so blocked
+# tasks are shown by ContextOS Web and found by agent sessions rather than by a view here.
+filters: file.inFolder("memory/tasks") && file.basename != "index"
+formulas:
+  id_link: file.asLink(note.id)
+  title_link: file.asLink(note.title)
+properties:
+  formula.id_link:
+    displayName: ID
+  formula.title_link:
+    displayName: Title
+  note.state:
+    displayName: State
+  note.task_type:
+    displayName: Type
+  note.entity:
+    displayName: Entity
+  note.assignee:
+    displayName: Assignee
+  note.priority:
+    displayName: Priority
+  note.due:
+    displayName: Due
+  note.scheduled:
+    displayName: Scheduled
+  note.waiting_on:
+    displayName: Waiting on
+  note.claimed_by:
+    displayName: Claimed by
+  note.claimed_until:
+    displayName: Claimed until
+  note.depends_on:
+    displayName: Depends on
+  note.parent:
+    displayName: Parent
+  note.completed:
+    displayName: Completed
+  note.cancelled:
+    displayName: Cancelled
+  note.updated:
+    displayName: Updated
+views:
+  - type: table
+    name: Open
+    filters:
+      and:
+        - note.state != "done"
+        - note.state != "adopted"
+        - note.state != "answered"
+        - note.state != "dropped"
+    groupBy:
+      property: note.state
+      direction: ASC
+    order:
+      - formula.id_link
+      - formula.title_link
+      - note.assignee
+      - note.entity
+      - note.priority
+      - note.due
+    sort:
+      - property: note.priority
+        direction: ASC
+  - type: table
+    name: By assignee
+    filters:
+      and:
+        - note.state != "done"
+        - note.state != "adopted"
+        - note.state != "answered"
+        - note.state != "dropped"
+    groupBy:
+      property: note.assignee
+      direction: ASC
+    order:
+      - formula.id_link
+      - formula.title_link
+      - note.state
+      - note.entity
+      - note.priority
+      - note.due
+    sort:
+      - property: note.priority
+        direction: ASC
+  - type: table
+    name: In progress
+    filters: note.state == "doing"
+    order:
+      - formula.id_link
+      - formula.title_link
+      - note.assignee
+      - note.claimed_by
+      - note.claimed_until
+    sort:
+      - property: note.claimed_until
+        direction: ASC
+  - type: table
+    name: Waiting
+    filters: note.state == "waiting"
+    groupBy:
+      property: note.waiting_on
+      direction: ASC
+    order:
+      - formula.id_link
+      - formula.title_link
+      - note.assignee
+      - note.updated
+    sort:
+      - property: note.updated
+        direction: ASC
+  - type: table
+    name: Review
+    filters: note.state == "review"
+    order:
+      - formula.id_link
+      - formula.title_link
+      - note.assignee
+      - note.updated
+    sort:
+      - property: note.updated
+        direction: ASC
+  - type: table
+    name: Decisions
+    filters:
+      and:
+        - note.task_type == "decision"
+        - note.state == "proposed"
+    order:
+      - formula.id_link
+      - formula.title_link
+      - note.assignee
+      - note.scheduled
+      - note.entity
+    sort:
+      - property: note.scheduled
+        direction: ASC
+  - type: table
+    name: Questions
+    filters:
+      and:
+        - note.task_type == "question"
+        - note.state == "open"
+    order:
+      - formula.id_link
+      - formula.title_link
+      - note.assignee
+      - note.scheduled
+      - note.entity
+    sort:
+      - property: note.scheduled
+        direction: ASC
+  - type: table
+    name: Closed
+    filters:
+      or:
+        - note.state == "done"
+        - note.state == "adopted"
+        - note.state == "answered"
+        - note.state == "dropped"
+    order:
+      - formula.id_link
+      - formula.title_link
+      - note.state
+      - note.completed
+      - note.cancelled
+    sort:
+      - property: note.updated
+        direction: DESC

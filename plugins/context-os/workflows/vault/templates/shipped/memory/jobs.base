@@ -1,0 +1,74 @@
+# Live table views over vault job run records, which ContextOS Web writes under
+# memory/jobs/<workflow>/<job>/<YYYY>/<MM>/R-<n>.md with `type: job-run`
+# frontmatter: id, workflow, job, trigger, status, dry_run, started, completed,
+# and error. A run's status is running, succeeded, degraded, failed, cancelled,
+# interrupted, or skipped. Requires Obsidian's Bases core plugin. Edit with the
+# ContextOS MCP base_apply tool rather than by hand, to keep filters, views, and
+# property display names in step.
+filters:
+  and:
+    - file.inFolder("memory/jobs")
+    - note.type == "job-run"
+properties:
+  file.name:
+    displayName: Run
+  note.workflow:
+    displayName: Workflow
+  note.job:
+    displayName: Job
+  note.status:
+    displayName: Status
+  note.trigger:
+    displayName: Trigger
+  note.dry_run:
+    displayName: Dry run
+  note.started:
+    displayName: Started
+  note.completed:
+    displayName: Completed
+  note.error:
+    displayName: Error
+views:
+  - type: table
+    name: All runs
+    order:
+      - note.workflow
+      - note.job
+      - file.name
+      - note.status
+      - note.trigger
+      - note.dry_run
+      - note.started
+    sort:
+      - property: note.started
+        direction: DESC
+  - type: table
+    name: Needs attention
+    filters:
+      or:
+        - note.status == "failed"
+        - note.status == "degraded"
+        - note.status == "interrupted"
+    order:
+      - note.workflow
+      - note.job
+      - file.name
+      - note.status
+      - note.started
+      - note.completed
+      - note.error
+    sort:
+      - property: note.started
+        direction: DESC
+  - type: table
+    name: Currently running
+    filters:
+      note.status == "running"
+    order:
+      - note.workflow
+      - note.job
+      - file.name
+      - note.started
+    sort:
+      - property: note.started
+        direction: DESC

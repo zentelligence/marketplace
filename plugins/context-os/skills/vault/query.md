@@ -38,7 +38,7 @@ Extract structured arguments from the operator's natural-language query. Output 
 {
   "domains": ["<wiki domain folder names, e.g. personal-development, technology>"],
   "topics":  ["<topic folder names or substrings>"],
-  "keywords": ["<2-5 free terms likely to appear in article titles or Key Takeaways>"]
+  "keywords": ["<2-5 free terms likely to appear in article titles or summaries>"]
 }
 ```
 
@@ -50,51 +50,35 @@ Rules:
 
 ### Step 2: retrieve candidates
 
-If MCP is available (see the vault router's MCP awareness section):
+Search with the ContextOS MCP query tools (see the [mcp-tools](../mcp-tools/search.md) search guide):
 
-1. Call `mcp__contextos__query_text` with `query` built from the `keywords` (fold `domains`/`topics` into `path_prefix` where they map cleanly to a wiki folder), returning ranked hits with heading-aware snippets. Treat each hit like a    `candidate_article` in Step 3: still read the file in full before citing it.
-2. Call `mcp__contextos__query_graph` with `operation: "backlinks"` (or `"neighbours"`) from any article `query_text` surfaced, to pull in linked context `query_text` alone would miss, and `operation: "orphans"` to help identify gaps.
-3. If `[vault.search] semantic = true` is configured, also try `mcp__contextos__query_semantic` for broader-recall hits a keyword match would  miss. If it errors (semantic search not enabled for this vault), skip it silently — there is no script equivalent for this part specifically.
-4. If any of the above errors or the tools are not registered, fall back to the script below for the whole retrieval step rather than mixing partial results.
+1. Call `mcp__contextos__query_blended` with a short phrase describing the question, folding `domains` and `topics` into `path_prefix` where they map cleanly to a `memory/wiki/` folder. It fuses keyword and semantic ranking, and answers from one index with a warning if the other is off.
+2. Use `mcp__contextos__query_text` instead when the question turns on exact terms or a property filter (`tags`, `fields`, `note_type`).
+3. Call `mcp__contextos__query_graph` (`backlinks` or `neighbours`) from the strongest articles to pull in linked context a ranked search alone would miss.
+4. Search `memory/entities/` and `memory/insights/` the same way when the question touches an entity or a working principle.
 
-Otherwise, run the retrieval script:
-
-```bash
-session-start >/dev/null 2>&1
-source "${TMPDIR:-/tmp}/plugin-data.env" 2>/dev/null
-echo '<JSON from Step 1>' | python $CONTEXT_OS_PLUGIN_ROOT/scripts/vault_query.py --vault-root .
-```
-
-The script runs index traversal, a YAML-based full-vault scan, an entities scan, and
-an insights scan. Returns a JSON payload with:
-- `candidate_articles`: ranked wiki articles
-- `candidate_entities`: ranked entity files
-- `candidate_insights`: ranked insight notes
+If a search fails, report it. Keep the results of any search that succeeded, and say which method failed rather than discarding everything.
 
 ### Step 3: review candidates
 
-The review discipline below applies the same way regardless of whether candidates came from the MCP tools or the script in Step 2.
+Triage each hit from its `title`, `metadata` (description, summary, status, note type), and snippet before reading anything.
 
-**candidate_articles** (ranked by `relevance_score`):
-1. Select 1 to 3 articles with highest score and best semantic fit.
-2. Read each selected article in full using the Read tool.
-3. Use `sources` field for provenance without opening raw files first.
+**Wiki articles:**
+1. Select the articles with the strongest fit.
+2. Read each selected article in full with `mcp__contextos__fs_attach_file`.
+3. Use its `sources` field for provenance without opening raw files first.
 
-**candidate_entities** (ranked by `relevance_score`):
-1. Select any entity files with score > 0.3 relevant to the query.
-2. Read each selected file in full.
+**Entity files:** read any that bear on the question.
 
-**candidate_insights** (ranked by `relevance_score`):
-1. Select any insights with score > 0.3 and `status: adopted` or `status: proposed`.
-2. Read each selected insight file in full.
-3. Note: `status: dismissed` insights are excluded by default.
-
-If `missing_indexes` is non-empty, surface each as a vault hygiene note.
+**Insight notes:**
+1. Select insights with `status: adopted` or `status: proposed` that bear on the question.
+2. Read each selected insight in full.
+3. `status: dismissed` insights are excluded by default.
 
 ### Step 4: synthesise answer
 
 - Answer from the full article and insight text.
-- For wiki articles: cite with relative-path link plus the article's `**Source:**` line.
+- For wiki articles: cite with relative-path link plus the sources in the article's frontmatter `sources`.
 - For insight notes: cite with relative-path link; note `confidence` level and `status`.
 - If an insight is `status: proposed`, flag this: it has not yet been adopted as a working principle.
 - If the answer is substantial and reusable, offer to file it as a new wiki article.
@@ -104,7 +88,6 @@ If `missing_indexes` is non-empty, surface each as a vault hygiene note.
 
 ## Token discipline
 
-- Total file reads: script output + 1-3 article reads + 0-2 entity reads + 0-2 insight reads.
-- Do not read the full wiki tree.
-- Do not open articles not identified via index traversal or the retrieval script.
-- Do not read raw or research files unless the operator specifically requests primary source evidence.
+- Triage from search results first; read in full only the notes the answer depends on.
+- Do not read the full wiki tree, and do not walk folders by hand.
+- Do not read raw or research files unless the answer needs primary-source evidence or the operator asks for it.

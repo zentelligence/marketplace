@@ -1,0 +1,103 @@
+# Live views over memory/decisions/, the register of decisions and questions about the vault
+# itself: its design, schema, conventions, structure, and operation. One note per record,
+# a decision (VD-) or a question (VQ-), told apart by `type`. Decisions and questions about
+# the operator's own work outside the vault are tasks in memory/tasks/, not records here.
+# Requires Obsidian's Bases core plugin; memory/decisions/index.md is the plain-Markdown
+# fallback. Edit via the contextos MCP base_apply tool where available, not by hand, to keep
+# filters, views, and property display names in sync.
+filters: file.inFolder("memory/decisions") && file.basename != "index"
+formulas:
+  id_link: file.asLink(note.id)
+properties:
+  formula.id_link:
+    displayName: ID
+  note.title:
+    displayName: Title
+  note.type:
+    displayName: Kind
+  note.status:
+    displayName: Status
+  note.date:
+    displayName: Decided
+  note.applies_to:
+    displayName: Applies to
+  note.superseded_by:
+    displayName: Superseded by
+  note.created:
+    displayName: Raised
+  note.blocks:
+    displayName: Blocks
+  note.resolution_path:
+    displayName: Resolution path
+  note.resolved:
+    displayName: Resolved
+  note.decision:
+    displayName: Decision
+views:
+  - type: table
+    name: Adopted decisions
+    filters:
+      and:
+        - note.type == "decision"
+        - note.status == "adopted"
+    order:
+      - formula.id_link
+      - note.title
+      - note.date
+      - note.applies_to
+    sort:
+      - property: note.date
+        direction: DESC
+  - type: table
+    name: Open questions
+    filters:
+      and:
+        - note.type == "question"
+        - note.status == "open"
+    order:
+      - formula.id_link
+      - note.title
+      - note.created
+      - note.blocks
+      - note.resolution_path
+    sort:
+      - property: note.created
+        direction: ASC
+  - type: table
+    name: Superseded decisions
+    filters:
+      and:
+        - note.type == "decision"
+        - note.status == "superseded"
+    order:
+      - formula.id_link
+      - note.title
+      - note.date
+      - note.superseded_by
+    sort:
+      - property: note.date
+        direction: DESC
+  - type: table
+    name: Resolved questions
+    filters:
+      and:
+        - note.type == "question"
+        - note.status == "resolved"
+    order:
+      - formula.id_link
+      - note.title
+      - note.resolved
+      - note.decision
+    sort:
+      - property: note.resolved
+        direction: DESC
+  - type: table
+    name: All records
+    order:
+      - formula.id_link
+      - note.title
+      - note.type
+      - note.status
+    sort:
+      - property: note.id
+        direction: ASC

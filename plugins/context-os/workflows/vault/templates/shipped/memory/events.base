@@ -1,0 +1,108 @@
+# Live table views over vault events, which the ContextOS MCP server writes under
+# memory/events/<YYYY>/<MM>/ with `type: event` frontmatter: kind, severity (info,
+# warning, or error), at, entity, subject, subject_id, subject_path, subject_base, and actor, then the kind's own
+# fields. The server fires task, member, and vault health events itself, and clients
+# record the kinds declared in registry/events/ with base_record_create against this
+# base. Nothing else writes under memory/events/. The External view lists the kinds
+# the product does not ship: every kind except the fourteen the server fires or the
+# scaffold ships, compared by exact name. Requires Obsidian's Bases core plugin. Edit with the ContextOS MCP
+# base_apply tool rather than by hand, to keep filters, views, and property display
+# names in step.
+filters:
+  and:
+    - file.inFolder("memory/events")
+    - note.type == "event"
+properties:
+  file.name:
+    displayName: Event
+  note.kind:
+    displayName: Kind
+  note.severity:
+    displayName: Severity
+  note.at:
+    displayName: At
+  note.entity:
+    displayName: Entity
+  note.subject:
+    displayName: Subject
+  note.subject_id:
+    displayName: Subject ID
+  note.subject_path:
+    displayName: Subject path
+  note.subject_base:
+    displayName: Subject base
+  note.actor:
+    displayName: Actor
+views:
+  - type: table
+    name: Recent
+    order:
+      - note.at
+      - note.kind
+      - note.severity
+      - note.entity
+      - note.subject
+      - note.actor
+    sort:
+      - property: note.at
+        direction: DESC
+  - type: table
+    name: Attention
+    filters:
+      or:
+        - note.severity == "warning"
+        - note.severity == "error"
+    order:
+      - note.at
+      - note.kind
+      - note.severity
+      - note.entity
+      - note.subject
+      - note.actor
+    sort:
+      - property: note.at
+        direction: DESC
+  - type: table
+    name: By kind
+    groupBy:
+      property: note.kind
+      direction: ASC
+    order:
+      - note.at
+      - note.severity
+      - note.entity
+      - note.subject
+      - note.actor
+    sort:
+      - property: note.at
+        direction: DESC
+  - type: table
+    name: External
+    filters:
+      and:
+        - note.kind != "task.created"
+        - note.kind != "task.state-changed"
+        - note.kind != "task.reassigned"
+        - note.kind != "task.claim-lapsed"
+        - note.kind != "task.unknown-state"
+        - note.kind != "task.moved"
+        - note.kind != "member.state-changed"
+        - note.kind != "vault.degraded"
+        - note.kind != "vault.recovered"
+        - note.kind != "job.failed"
+        - note.kind != "job.suspended"
+        - note.kind != "job.recovered"
+        - note.kind != "job.retired"
+        - note.kind != "session.run-started"
+        - note.kind != "session.run-finished"
+        - note.kind != "agent.delegated"
+    order:
+      - note.at
+      - note.kind
+      - note.severity
+      - note.entity
+      - note.subject
+      - note.actor
+    sort:
+      - property: note.at
+        direction: DESC
