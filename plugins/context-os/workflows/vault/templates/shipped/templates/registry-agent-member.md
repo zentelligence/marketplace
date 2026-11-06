@@ -1,6 +1,6 @@
 ---
 kind: member
-name: {{name}}
+name: "{{name}}"
 function: <lowercase-hyphenated position, e.g. finance>
 description: "<one line: what {{OperatorName}} can entrust to this member, in terms of outcomes rather than tools or folders>"
 tier: <fast | balanced | deep>

@@ -5,6 +5,9 @@
 // Templates: templates/shipped/<path> and templates/seeded/<path> go to <path>; templates/entity/profile.md goes to
 // memory/entities/<entity_slug>.md, beside an empty <entity_slug>/ folder. The difference
 // between shipped and seeded matters only to the update workflow, which refreshes shipped files and never seeded ones.
+// templates/members/<function>.md is read only here, to write each team member, and never reaches the vault itself.
+// The plugin's decisions are raised through the register once this run has created it; a register that already exists
+// is the update workflow's to bring in step.
 
 import "modules/helpers" as helpers;
 import "modules/layout" as layout;
@@ -112,6 +115,19 @@ for destination in destinations {
     files_created.push(destination);
 }
 
+let decisions_created = [];
+if files_created.contains("memory/decisions.md") {
+    for decision in layout::DECISIONS {
+        try {
+            let key = helpers::raise_decision(vault, decision);
+            if key != "" { decisions_created.push(key); }
+        } catch (err) {
+            errors.push(decision.slug + ": " + err.to_string());
+            break;
+        }
+    }
+}
+
 // The team: the operator as its human member, and each member rendered from its shipped template.
 let members_created = [];
 let members_skipped = [];
@@ -155,14 +171,14 @@ if "operator" in inputs && inputs.operator != "" {
     let members = if "members" in inputs { inputs.members } else { [] };
     for member in members {
         let slug = member_slug(member.name);
-        let source = "templates/shipped/templates/member-" + member.function + ".md";
+        let source = "templates/members/" + member.function + ".md";
         if slug == "" { errors.push(member.function + ": the name has no letters or digits"); continue; }
         if slug == operator_slug { errors.push(member.function + ": the name is the operator's own; choose another"); continue; }
         let template = "";
         try {
             template = workflow_file(source).content;
         } catch (err) {
-            errors.push(member.function + ": no shipped member template " + source);
+            errors.push(member.function + ": no member template " + source);
             continue;
         }
         // The member's working folder for scheduled sessions: under .contextos/, so Git, search, and index.md skip it.
@@ -177,6 +193,7 @@ if "operator" in inputs && inputs.operator != "" {
         } else {
             let text = without_closing_note(template);
             text = helpers::replaced(text, "{{slug}}", slug);
+            text = helpers::replaced(text, "name: \"{{name}}\"", "name: " + toml_string(member.name));
             text = helpers::replaced(text, "{{name}}", member.name);
             text = helpers::replaced(text, "{{OperatorName}}", operator);
             call_mcp(SERVER, "fs_write_file", #{ path: vault + "://" + destination, content: text });
@@ -205,6 +222,7 @@ set_output("result", #{
     folders_created: folders_created,
     files_created: files_created,
     files_skipped: files_skipped,
+    decisions_created: decisions_created,
     members_created: members_created,
     members_skipped: members_skipped,
     workspaces_created: workspaces_created,

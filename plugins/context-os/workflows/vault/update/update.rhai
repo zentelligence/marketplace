@@ -12,19 +12,37 @@
 // - V != A and P != A: a conflict; A is kept, so it stays a conflict until resolved.
 // Seeded files are added when missing and never refreshed. AGENTS.md, CLAUDE.md, and registry/instructions/global.md
 // carry the operator's name, so they arrive only through the migrations that know it.
+//
+// The plugin's decisions are not files: each is raised through the register, which gives it the next id the vault's own
+// counter has free, so it can never land on a record the vault already holds. One is raised at most once: the state
+// records it, and a decision of that title already in the register counts as raised. They are raised in list order, and
+// a failure stops the rest until the next run, so ids keep that order. Update never rewrites a record.
 
 import "modules/helpers" as helpers;
 import "modules/layout" as layout;
 
-const PACKAGE_VERSION = "0.1.2";
+const PACKAGE_VERSION = "0.1.8";
 const PLUGIN = "context-os";
 const STATE_FILE = ".contextos/state.json";
 const ORIENTATION = "registry/instructions/global.md";
 const RETIRED_DIR = ".contextos/retired";
+const DECISIONS_DIR = "memory/decisions";
 
 fn name_of(path) {
     let at = helpers::last_index(path, "/");
     if at < 0 { path } else { path.sub_string(at + 1) }
+}
+
+// The bare file name of a register record named with a slug, `vd-001-some-slug.md` giving `vd-001.md`, or "" for any
+// other name.
+fn bare_record_name(name) {
+    if !name.ends_with(".md") { return ""; }
+    let parts = name.split("-");
+    if parts.len() < 3 || (parts[0] != "vd" && parts[0] != "vq") || parts[1] == "" { return ""; }
+    for digit in parts[1].chars() {
+        if digit < '0' || digit > '9' { return ""; }
+    }
+    parts[0] + "-" + parts[1] + ".md"
 }
 
 fn listing(vault, dir) {
@@ -37,6 +55,15 @@ fn listing(vault, dir) {
         if !helpers::is_not_found(err) { throw err; }
     }
     names
+}
+
+// Whether the register in `folder` holds a decision titled `title`, in any file and under any id.
+fn holds_decision(vault, folder, title) {
+    let found = call_mcp("contextos", "base_query", #{ vault: vault + "://.", format: "json", definition: #{
+        filters: "file.inFolder(\"" + folder + "\") && note.title == \"" + title + "\"",
+        order: ["note.title"],
+    } });
+    found.matched > 0
 }
 
 fn read_text(vault, path) {
@@ -83,13 +110,13 @@ let apply = "apply" in inputs && inputs.apply;
 let errors = [];
 
 // --- state ------------------------------------------------------------------------------------------------------
-let state = #{ package_version: (), last_update: (), synced_files: #{}, migrations: [] };
+let state = #{ package_version: (), last_update: (), synced_files: #{}, migrations: [], decisions_raised: [] };
 let state_hash = "";
 let state_read = read_text(vault, STATE_FILE);
 if state_read != () {
     try {
         let parsed = parse_json(state_read.content);
-        for key in ["package_version", "last_update", "synced_files", "migrations"] {
+        for key in ["package_version", "last_update", "synced_files", "migrations", "decisions_raised"] {
             if key in parsed && parsed[key] != () { state[key] = parsed[key]; }
         }
         state_hash = state_read.content_hash;
@@ -101,11 +128,10 @@ if state_read != () {
     }
 }
 let synced = state.synced_files;
-// An entry plugin 1.17.3 recorded is the bare hash of the file as last synced, read as its shipped ancestor.
+// An entry plugin 1.17.3 recorded is the bare hash of the vault's copy as last synced, which may hold the operator's
+// edits, so it says nothing about what shipped: the ancestor is unknown, and a copy that differs is a conflict.
 for path in synced.keys() {
-    let entry = synced[path];
-    if type_of(entry) == "string" { synced[path] = #{ shipped: entry, plugin: PLUGIN }; }
-    else if type_of(entry) != "map" { synced[path] = #{ shipped: (), plugin: PLUGIN }; }
+    if type_of(synced[path]) != "map" { synced[path] = #{ shipped: (), plugin: PLUGIN }; }
 }
 
 // --- the package's files ------------------------------------------------------------------------------------------
@@ -196,6 +222,27 @@ for destination in seeded_paths {
     files_added.push(destination);
 }
 
+// --- the plugin's decisions -----------------------------------------------------------------------------------------
+let decisions_added = [];
+let raised = state.decisions_raised;
+for decision in layout::DECISIONS {
+    if raised.contains(decision.slug) { continue; }
+    if !holds_decision(vault, DECISIONS_DIR, decision.title) {
+        if apply {
+            try {
+                let key = helpers::raise_decision(vault, decision);
+                if key != "" { decisions_added.push(key + ": " + decision.title); }
+            } catch (err) {
+                errors.push(decision.slug + ": " + err.to_string());
+                break;
+            }
+        } else {
+            decisions_added.push(decision.title);
+        }
+    }
+    raised.push(decision.slug);
+}
+
 // --- migrations ----------------------------------------------------------------------------------------------------
 let pending = [];
 let agents_heading = "";
@@ -248,6 +295,17 @@ if old_scripts != () && old_scripts.kind == "dir" {
         description: "Utility scripts in a top-level scripts/ folder; they belong in registry/scripts/, beside the vault's other reusable definitions.",
         action: "Move every file in scripts/ to the same place under registry/scripts/. A file you edited replaces the plugin's untouched copy there, keeping your edits; one that differs from an edited copy there is left in scripts/ to merge by hand. What remains of scripts/ then moves to " + RETIRED_DIR + "/scripts/, or, when a file was left, each file already handled does.",
         paths: ["scripts/"] });
+}
+let slugged = [];
+for name in listing(vault, DECISIONS_DIR).keys() {
+    if bare_record_name(name) != "" { slugged.push(DECISIONS_DIR + "/" + name); }
+}
+slugged.sort();
+if slugged.len() > 0 {
+    pending.push(#{ id: "decision-filenames",
+        description: "Records in " + DECISIONS_DIR + "/ whose file names carry a slug; a record's file is named for its id alone.",
+        action: "Move each to its bare id, such as vd-001.md. Where a record already holds that name, an identical copy or the plugin's unedited one moves to " + RETIRED_DIR + "/decisions/; any other is left to merge by hand. Links to the old names do not follow.",
+        paths: slugged });
 }
 
 let migrations_applied = [];
@@ -326,6 +384,31 @@ for id in requested {
                 changes.push("left " + left.len() + " file(s) in scripts/ that differ from an edited copy in registry/scripts/, to merge by hand: "
                     + left.reduce(|sum, path| if sum == "" { path } else { sum + ", " + path }, ""));
             }
+        } else if id == "decision-filenames" {
+            let left = [];
+            for path in slugged {
+                let destination = DECISIONS_DIR + "/" + bare_record_name(name_of(path));
+                let target = helpers::info_of(vault, destination);
+                if target == () {
+                    call_mcp("contextos", "fs_move_file", #{ source: vault + "://" + path, destination: vault + "://" + destination });
+                    changes.push("moved " + path + " to " + destination);
+                } else {
+                    let current = helpers::info_of(vault, path).content_hash;
+                    let unedited = path in synced && synced[path].shipped == current;
+                    if current != target.content_hash && !unedited {
+                        left.push(path);
+                        continue;
+                    }
+                    let retired = RETIRED_DIR + "/decisions/" + name_of(path);
+                    call_mcp("contextos", "fs_move_file", #{ source: vault + "://" + path, destination: vault + "://" + retired });
+                    changes.push("moved " + path + " to " + retired + ", since " + destination + " already holds that id");
+                }
+                synced.remove(path);
+            }
+            if left.len() > 0 {
+                changes.push("left " + left.len() + " file(s) that differ from the record already at their bare id, to merge by hand: "
+                    + left.reduce(|sum, path| if sum == "" { path } else { sum + ", " + path }, ""));
+            }
         }
     } catch (err) {
         errors.push(id + ": " + err.to_string());
@@ -376,6 +459,7 @@ if team_file != () {
 // --- record --------------------------------------------------------------------------------------------------------
 if apply {
     state.synced_files = synced;
+    state.decisions_raised = raised;
     state.package_version = PACKAGE_VERSION;
     state.last_update = updated_at;
     let args = #{ path: vault + "://" + STATE_FILE, content: state.to_json() + "\n" };
@@ -388,6 +472,7 @@ set_output("plan", #{
     folders_added: folders_added,
     files_added: files_added,
     files_refreshed: files_refreshed,
+    decisions_added: decisions_added,
     conflicts: conflicts,
     resolved: resolved,
     migrations_pending: migrations_pending,

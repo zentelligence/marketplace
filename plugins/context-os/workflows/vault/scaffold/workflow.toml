@@ -10,6 +10,7 @@ allow = [
     { server = "contextos", tool = "fs_attach_file" },
     { server = "contextos", tool = "fs_write_file" },
     { server = "contextos", tool = "fs_create_directory" },
+    { server = "contextos", tool = "base_record_create" },
 ]
 
 [[input]]
@@ -64,6 +65,11 @@ kind = "string"
 [[output.properties]]
 name = "files_skipped"
 kind = "number"
+[[output.properties]]
+name = "decisions_created"
+kind = "array"
+[output.properties.items]
+kind = "string"
 [[output.properties]]
 name = "members_created"
 kind = "array"

@@ -1,6 +1,6 @@
 ---
 kind: member
-name: {{name}}
+name: "{{name}}"
 function: support
 description: "Support. Entrust the small things that must not slip: sorting what comes in, follow-through on commitments, reminders, scheduling, and routine requests handled end to end."
 tier: fast

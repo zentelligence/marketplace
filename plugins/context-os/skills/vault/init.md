@@ -211,7 +211,7 @@ After listing all entities: `"How do these entities relate to each other? Note a
 
 Store the complete list as `entity_map`. No files are written at this step. The entity map contextualises every phase that follows.
 
-Then introduce the team, unless it already exists (Step 1.3): `"Alongside you, the vault has a small team of AI members who pick up work through your task list. Each owns one area: a chief of staff who triages and routes everything, a librarian who looks after what the vault knows, a technologist who builds and fixes the vault's tools and automations, support for day-to-day admin and follow-through, communications for anything outbound, drafted for your approval, and assurance for independently checking substantial work. They come named Ellis, Wren, Arlo, Noor, Juno, and Tess. Keep those names, or rename any of them?"` Store the chosen names as `member_names`, keyed by function. A name may not be the operator's own; if one is, ask again.
+Then introduce the team, unless it already exists (Step 1.3): `"Alongside you, the vault has a small team of AI members who pick up work through your task list. Each owns one area: a chief of staff who triages and routes everything, a librarian who looks after what the vault knows, a technologist who looks after anything technical, from software and systems to automations, support for day-to-day admin and follow-through, communications for anything outbound, drafted for your approval, and assurance for independently checking substantial work. They come named Ellis, Wren, Arlo, Noor, Juno, and Tess. Keep those names, or rename any of them?"` Store the chosen names as `member_names`, keyed by function. A name may not be the operator's own; if one is, ask again.
 
 ---
 

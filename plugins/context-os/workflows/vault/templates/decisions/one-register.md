@@ -1,19 +1,8 @@
----
-type: decision
-id: VD-002
-title: Vault decisions and questions share one register, and it covers only the vault itself
-description: Decisions and questions about the vault's own design and operation live together in memory/decisions/; the operator's decisions and questions about their own work are tasks.
-date: 2026-10-08
-status: adopted
-applies_to: [memory/decisions/, memory/decisions.base, memory/operating/vault-decisions.md, templates/registry-vault-decision.md, templates/registry-vault-question.md, memory/tasks/]
-superseded_by:
----
-
-# VD-002: Vault decisions and questions share one register, and it covers only the vault itself
+# Vault decisions and questions share one register, and it covers only the vault itself
 
 ## Context
 
-VD-001 gave decisions and questions a register each: `memory/decisions/` with `decisions.base`, and `memory/questions/` with `questions.base`. The questions register reached beyond the vault itself, also holding gaps in vault content and questions only the operator could answer about their own affairs. Meanwhile the task register (`memory/tasks/`) gained decision and question task types, so a question or decision about the operator's own work had two possible homes.
+Decisions and questions once had a register each: `memory/decisions/` with `decisions.base`, and `memory/questions/` with `questions.base`. The questions register reached beyond the vault itself, also holding gaps in vault content and questions only the operator could answer about their own affairs. Meanwhile the task register (`memory/tasks/`) gained decision and question task types, so a question or decision about the operator's own work had two possible homes.
 
 ## Options considered
 
@@ -27,7 +16,7 @@ VD-001 gave decisions and questions a register each: `memory/decisions/` with `d
 
 Decisions and questions about how the operator runs their entities and acts outside the vault are tasks in `memory/tasks/` (`task_type: decision` or `question`). So is a gap in vault content that needs work to close, such as a source read only in part or research awaiting confirmation.
 
-A record is never deleted or moved. A decision is superseded by a new decision, and a question is resolved in place.
+A record is never deleted or moved. A decision is superseded by a new decision, and a question is resolved in place. A record's file is named for its id alone, such as `vd-003.md`, with no slug.
 
 ## Migration backlog
 
@@ -35,4 +24,4 @@ A vault created before this decision keeps its `memory/questions/` folder and `q
 
 ## Recorded in
 
-`memory/operating/vault-decisions.md`, `memory/decisions/index.md`, `memory/decisions.base`, and the two register templates. Supersedes VD-001.
+`memory/operating/vault-decisions.md`, `memory/decisions/index.md`, `memory/decisions.base`, and the two register templates.

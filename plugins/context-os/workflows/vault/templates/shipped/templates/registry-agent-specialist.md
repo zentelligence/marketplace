@@ -1,6 +1,6 @@
 ---
 kind: specialist
-name: {{name}}
+name: "{{name}}"
 description: "<one line: what this specialist does and when to delegate to it>"
 tier: <fast | balanced | deep>
 access: <all | read-only>

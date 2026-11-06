@@ -146,7 +146,7 @@ When the operator requests `/agent create <slug>`:
    | `## Activation and resource limits` | Runs only when delegated to with `<slug>:agent`, never on its own initiative. Stops and returns for direction when a job needs more than its brief allows. |
    | `## Delegation rules` | Does not delegate. It does the work itself and returns anything beyond its contract to the caller. |
 
-7. Read `templates/registry-agent-specialist.md` in the vault, or use the fallback template below if it does not exist. Replace each section's placeholder text with its answer or confirmed draft, matching by section heading, and replace `{{name}}` with the display name. Leave out the closing `<!-- -->` note. If the operator's template has a section with neither an answer nor a draft here, leave its placeholder in place and flag it in the confirmation (item 11) rather than inventing content. Write `registry/agents/<slug>.md` with `mcp__contextos__note_create`, passing `frontmatter: {kind: "specialist", name: "<Display Name>", description: "<one line>", tier: "<tier>", access: "<access>"}` and `content` set to everything from the template's first heading onward.
+7. Read `templates/registry-agent-specialist.md`. If it does not exist, tell the operator to run `/vault update` and stop. Replace each section's placeholder text with its answer or confirmed draft, matching by section heading, and replace `{{name}}` with the display name. Leave out the closing `<!-- -->` note. If the operator's template has a section with neither an answer nor a draft here, leave its placeholder in place and flag it in the confirmation (item 11) rather than inventing content. Write `registry/agents/<slug>.md` with `mcp__contextos__note_create`, passing `frontmatter: {kind: "specialist", name: "<Display Name>", description: "<one line>", tier: "<tier>", access: "<access>"}` and `content` set to everything from the template's first heading onward.
 8. Leave `registry/agents/index.md` alone: the ContextOS MCP server lists the new file in it, with its frontmatter `description` as the summary.
 9. Add a log summary: call `mcp__contextos__vault_log_append` with `entry: "agent create | Created agent definition: <slug>"` and `files: ["registry/agents/<slug>.md"]`.
 10. Check the write result. A `projection/` warning means the write succeeded but the agent could not be projected into Claude Code or Codex; tell the operator what it says and point them at `doctor` (see the mcp-tools skill's maintenance topic). A `projection/invalid-definition` warning naming `model` or `tools` means the definition used a host field name: fix it to `tier` and `access` with `fs_edit_file` or `frontmatter_update`. Never retry the write or write a host folder yourself.
@@ -174,7 +174,7 @@ A new member is the operator's decision, so this step runs only for the operator
    - `"Hands off: what do they not own, and who does?"`
    - `"Authority: what may they do unprompted, what may they delegate, and what needs your approval?"`
    - `"Boundaries: what must they never do, whatever a task says?"`
-4. Draft the remaining sections from the answers, using the shipped members in `templates/member-*.md` as models: `## Intake and context formation`, `## Judgement and approach selection`, `## Outcomes, deliverables, and accountability`, `## Standards of care and acceptance`, and `## Collaboration, delegation, and retained responsibility`. Show the operator all five, say that they are proposed, and ask what to change. Write nothing until they confirm.
+4. Draft the remaining sections from the answers, taking structure and each section's purpose from `templates/registry-agent-member.md`, and using the `kind: member` definitions in `registry/agents/` as examples of content only, since one may predate the current template: `## Intake and context formation`, `## Judgement and approach selection`, `## Outcomes, deliverables, and accountability`, `## Standards of care and acceptance`, and `## Collaboration, delegation, and retained responsibility`. Show the operator all five, say that they are proposed, and ask what to change. Write nothing until they confirm.
 5. Read `templates/registry-agent-member.md`. If it does not exist, tell the operator to run `/vault update` and stop. Replace each section's placeholder text with its answer or confirmed draft, matching by section heading, and keep the fixed bullets under `## Ways of working`. Replace `{{name}}` with the name and `{{OperatorName}}` with the operator's name, and leave out the closing `<!-- -->` note. Write `registry/agents/<slug>.md` with `mcp__contextos__note_create`, passing `frontmatter: {kind: "member", name: "<name>", function: "<function>", description: "<one line>", tier: "<tier>", review_authority: "<authority>", effects: []}` and `content` set to everything from the first heading onward.
 6. Create the member's workspace with `mcp__contextos__fs_create_directory` at `<vault>://.contextos/workspaces/<slug>`.
 7. Append this entry to `.contextos/team.toml` with `mcp__contextos__fs_write_file` and the hash from item 1, never setting `chief_of_staff`:
@@ -212,54 +212,6 @@ Check in this order, and stop at the first match:
 | Reusable wording | A prompt |
 
 Only a need for isolated context and a checkable contract calls for a specialist. Then read the `description` of every `kind: specialist` definition in `registry/agents/`. If one covers the job or most of it, extending it is the default. If the vault holds more than twelve specialists, say so: that is a prompt to review the pool, not a limit.
-
----
-
-## Agent file template (fallback)
-
-Used only when `templates/registry-agent-specialist.md` is not present in the vault.
-
-```markdown
----
-kind: specialist
-name: <Display Name>
-description: "<one line: what this agent does and when to delegate to it>"
-tier: <fast | balanced | deep>
-access: <all | read-only>
----
-
-# <Display Name>
-
-## Identity
-
-## Purpose and success
-
-## Relationships and handovers
-
-## Context and memory
-
-## Judgement and escalation
-
-## Failure and recovery
-
-## Learning and change control
-
-## Activation and resource limits
-
-## Inputs contract
-
-## Method or process
-
-## Outputs contract
-
-## Verification
-
-## Delegation rules
-
-## Constraints
-```
-
----
 
 ## Invariants
 

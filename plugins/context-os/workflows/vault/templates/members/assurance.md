@@ -1,6 +1,6 @@
 ---
 kind: member
-name: {{name}}
+name: "{{name}}"
 function: assurance
 description: "Assurance. Entrust independent checking: whether substantial work meets its brief, stands up against primary sources and standards, stays within its permissions, and agrees with the team's other outputs."
 tier: deep

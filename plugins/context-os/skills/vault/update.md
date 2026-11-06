@@ -30,6 +30,7 @@ The run's `outputs.plan`:
 | `folders_added` | Folders the vault is missing, created empty for the server to index. |
 | `files_added` | Files the vault is missing. Never overwrites an existing file. |
 | `files_refreshed` | Shipped files unchanged by the operator since the last sync whose shipped copy has since changed. |
+| `decisions_added` | Decisions the plugin has made that this vault has not received, raised in its register under the next free id. |
 | `conflicts` | Shipped files changed both by the operator and in the plugin; listed, not touched. |
 | `resolved` | Conflicts resolved as the operator chose. |
 | `migrations_pending`, `migrations_applied` | Material from earlier plugin versions, each applied only when the operator approves it. |
@@ -37,7 +38,7 @@ The run's `outputs.plan`:
 | `errors` | Anything that could not be done. |
 | `applied` | Whether the run changed the vault. |
 
-An applied run also records in `.contextos/state.json` the vault package's version, the time, each shipped file's shipped ancestor and shipping plugin, and a receipt per applied migration.
+An applied run also records in `.contextos/state.json` the vault package's version, the time, each shipped file's shipped ancestor and shipping plugin, and a receipt per applied migration, and which of the plugin's decisions the vault has received, so one the operator later deletes is not raised again.
 
 ---
 
@@ -57,11 +58,11 @@ Run the `update` job as a plan, which writes nothing (see [package.md](package.m
 contextos-web jobs run --shared contextos-vault update update --format json --input vault=<vault> --input 'updated_at="<now>"'
 ```
 
-If the vault has no `.contextos/state.json` yet, no shipped file has a known ancestor: each one that matches the plugin's copy is baselined on the first applied run, and each one that differs is reported as a conflict for the operator to resolve, never overwritten.
+If the vault has no `.contextos/state.json` yet, no shipped file has a known ancestor: each one that matches the plugin's copy is baselined on the first applied run, and each one that differs is reported as a conflict for the operator to resolve, never overwritten. The same holds for a file whose state entry is a bare hash, as plugin versions before 1.19.15 wrote: that hash may be the operator's own copy, so it is never read as what shipped.
 
 ### Step 3: confirm
 
-Summarise `outputs.plan` for the operator: files that would be added, files that would be refreshed (safe, being unmodified since the last sync), any `conflicts` (files the operator has changed where the plugin's copy differs too), and the `migrations_pending` backlog (each with its `description` and proposed `action`). Report each `team_conflicts` item too: the server's `doctor` says why `.contextos/team.toml` cannot be used by the vault's jobs, and ContextOS Web pauses the vault's scheduled jobs while it stays that way. Which member is the chief of staff is the operator's decision, so show the item and the file and let the operator correct it; never edit `team.toml` to repair it. Ask before applying if there is anything to refresh or any conflict to review; adding brand-new files needs no confirmation, since it is purely additive and identical in risk to `/vault init`'s scaffold step.
+Summarise `outputs.plan` for the operator: files that would be added, files that would be refreshed (safe, being unmodified since the last sync), each of `decisions_added`, any `conflicts` (files the operator has changed where the plugin's copy differs too), and the `migrations_pending` backlog (each with its `description` and proposed `action`). Report each `team_conflicts` item too: the server's `doctor` says why `.contextos/team.toml` cannot be used by the vault's jobs, and ContextOS Web pauses the vault's scheduled jobs while it stays that way. Which member is the chief of staff is the operator's decision, so show the item and the file and let the operator correct it; never edit `team.toml` to repair it. Ask before applying if there is anything to refresh or any conflict to review; adding brand-new files needs no confirmation, since it is purely additive and identical in risk to `/vault init`'s scaffold step.
 
 ### Step 4: resolve conflicts
 
@@ -75,7 +76,7 @@ The choices are applied with everything else in Step 6.
 
 ### Step 5: choose migrations
 
-For each item in `migrations_pending`, explain its `description` and proposed `action`, and ask whether to apply it. An item with no `action` is reported only; say what handles it (`team`: run `/vault init`, which resumes without touching anything already captured and asks only for the members' names). `registry-scripts` moves the top-level `scripts/` folder into `registry/scripts/`; if its receipt lists files left in `scripts/`, show them to the operator to merge by hand.
+For each item in `migrations_pending`, explain its `description` and proposed `action`, and ask whether to apply it. An item with no `action` is reported only; say what handles it (`team`: run `/vault init`, which resumes without touching anything already captured and asks only for the members' names). `registry-scripts` moves the top-level `scripts/` folder into `registry/scripts/`; if its receipt lists files left in `scripts/`, show them to the operator to merge by hand. `decision-filenames` renames records in `memory/decisions/` to their bare ids; if its receipt lists files left, a different record already holds that id, so show both to the operator to merge by hand. Before applying it, check what links to each old name with `query_graph` `backlinks` and tell the operator, since links do not follow a move.
 
 ### Step 6: apply
 

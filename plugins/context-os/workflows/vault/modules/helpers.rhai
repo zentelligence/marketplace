@@ -38,3 +38,22 @@ fn info_of(vault, path) {
 
 // Whether `path` exists in `vault`.
 fn exists_in(vault, path) { info_of(vault, path) != () }
+
+// Raises `decision`, an entry of layout::DECISIONS, in `vault`'s register, which assigns its id. Returns that id, or ""
+// when the register already holds a decision of that title.
+fn raise_decision(vault, decision) {
+    try {
+        let record = call_mcp("contextos", "base_record_create", #{
+            path: vault + "://memory/decisions.base",
+            prefix: "VD",
+            unique_fields: ["title"],
+            frontmatter: #{ title: decision.title, description: decision.description, date: decision.date,
+                status: "adopted", applies_to: decision.applies_to, superseded_by: () },
+            content: workflow_file("templates/decisions/" + decision.slug + ".md").content,
+        });
+        return record.key;
+    } catch (err) {
+        if !err.to_string().contains("duplicate-record") { throw err; }
+    }
+    ""
+}

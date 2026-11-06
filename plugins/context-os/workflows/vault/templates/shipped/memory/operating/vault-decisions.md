@@ -14,7 +14,7 @@ How the vault records decisions and questions about itself: its design, schema, 
 
 ## Where records live
 
-- **Notes:** `memory/decisions/`, one per record. Created with the contextos MCP `base_record_create` tool against `memory/decisions.base`, which assigns the id from `memory/decisions.md`: `prefix: VD` for a decision, `prefix: VQ` for a question. Ids are sequential within each series and never reused.
+- **Notes:** `memory/decisions/`, one per record. Created with the contextos MCP `base_record_create` tool against `memory/decisions.base`, which assigns the id from `memory/decisions.md`: `prefix: VD` for a decision, `prefix: VQ` for a question. Ids are sequential within each series and never reused. A record's file is named for its id alone, such as `vd-003.md` or `vq-001.md`, with no slug: leave the file name to the server.
 - **Templates:** `templates/registry-vault-decision.md` and `templates/registry-vault-question.md`. Each closes with its full field reference.
 - **Flat index:** the ContextOS MCP server keeps `memory/decisions/index.md` listing every record; never edit it by hand.
 - **Obsidian Base:** `memory/decisions.base` shows adopted decisions, open questions, superseded decisions, resolved questions, and every record. Nothing in it needs upkeep when a record is added.

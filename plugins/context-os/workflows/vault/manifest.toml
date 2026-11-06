@@ -4,8 +4,8 @@
 # `digest` is the SHA-256 over every other file in this folder (tests/test_vault_package.py checks it;
 # tools/package_digest.py writes it). `workflows.toml` lists the workflows and declares what they share.
 name = "contextos-vault"
-version = "0.1.2"
-digest = "sha256:be58e2fe8d55e2ef3d1e3cb4858932653fda4db2c0a5d1ed62b5def92e1bf339"
+version = "0.1.8"
+digest = "sha256:506cca2bdc73983e27a5d59946f93ac64b3766c94a95d2b61cd01060c3b4e705"
 
 [[files]]
 path = "health/health.rhai"
@@ -21,27 +21,55 @@ hash = "1c4d1ef07403b1112c513ca7fb4334bcf71c703903bbd7e31c4f968dd403f0cb"
 
 [[files]]
 path = "modules/helpers.rhai"
-hash = "5819188c3da3f8af0e9f9e4ad2813f9bab889e3079c639ecb8a856996d17ba0d"
+hash = "297a656a17c478037acca85265258611fd4e71a65eea54ee29d73f72b9dec7f5"
 
 [[files]]
 path = "modules/layout.rhai"
-hash = "cf8d2d894b9d9f105f5bcb68c0e4fa48ac6e87305fb1ef96f731467a323e5073"
+hash = "e1064edd9556703b576075c5e719842ba6bbfb580c565d19ae6b72fa4240e809"
 
 [[files]]
 path = "scaffold/scaffold.rhai"
-hash = "af6c9587a586ec820452d0234a3bc713e410490eb07e4f225562f742cd71608b"
+hash = "7d18355450c66e52eb3d6455c91b95c862856fbcece393b69c8f0971a1cd20fa"
 
 [[files]]
 path = "scaffold/tests/current.toml"
-hash = "b73276912c6c9b120a4625e011bd5322fa0b5a1b2c0b81ec9c4d00e835141940"
+hash = "b33f277c52d6d1db00a3402c2e3c984b0c22f79cfb1a1e0e0c27141f3879f7a7"
 
 [[files]]
 path = "scaffold/workflow.toml"
-hash = "9a5898d60b68a9ade826af16d31af968e909d7f70e7ebeda20bed199632d770e"
+hash = "b49c04448b1622a7c7031ef73f2a64f7aecfc24844b2286d56b05ebb50bd625c"
+
+[[files]]
+path = "templates/decisions/one-register.md"
+hash = "4080ba19e84b578a4be4346c111994319ebfa30bf8a07dc0caaee3c913fdf8f2"
 
 [[files]]
 path = "templates/entity/profile.md"
 hash = "40b53af003d121dd60ecef59a96d3c39333fa0ff54b02f552e35e6fc2b0f7ac6"
+
+[[files]]
+path = "templates/members/assurance.md"
+hash = "47c99509141da0c9a2bddb79e56126234f986e917ab7a46ffe65da274a93d8ae"
+
+[[files]]
+path = "templates/members/chief-of-staff.md"
+hash = "3b1f9b9e1f52bc1281bf78aba3e1904a0b75cd1ddaaca23286f9a3ca21668abf"
+
+[[files]]
+path = "templates/members/communications.md"
+hash = "a973ebee565fde8251cc9ae34917502cae8972870dbf40acd4a14a89b6042998"
+
+[[files]]
+path = "templates/members/librarian.md"
+hash = "dd438c4eefbe4adcd2654678d03540735799561806c1702b458720ca19a306ed"
+
+[[files]]
+path = "templates/members/support.md"
+hash = "e893a053d34bf751753eec605fa8229316928d9d2b94bb682a6e1c63a11a7c96"
+
+[[files]]
+path = "templates/members/technologist.md"
+hash = "7ba4437246b65050b5d4f86782a186cbbbad214dc211f14cd28bec6efe11b2c0"
 
 [[files]]
 path = "templates/seeded/.contextos/journal.toml"
@@ -61,7 +89,7 @@ hash = "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49"
 
 [[files]]
 path = "templates/seeded/memory/decisions.md"
-hash = "0ea38050f59fc25f51769b1f66d036a53cb3f69280dd724a6a96f2b962223189"
+hash = "1fdc9799b17df81a0b5a15947a57bceaa601633a39e2bf2602a6f2da7c92f07d"
 
 [[files]]
 path = "templates/seeded/memory/entities/personal.md"
@@ -112,14 +140,6 @@ path = "templates/shipped/.contextos/fences.toml"
 hash = "4238a50c6f5f584589842b5ad481bd03454487301a8add5b4e574f0ac6ac0ffa"
 
 [[files]]
-path = "templates/shipped/memory/decisions/vd-001-one-file-per-decision-or-question.md"
-hash = "38ecc5db62810d0dfa9f3fb208f1ab599be74a90058ff3dc96c311ee804775c7"
-
-[[files]]
-path = "templates/shipped/memory/decisions/vd-002-vault-decisions-and-questions-share-one-register.md"
-hash = "189f9f75445145ec89b277001d283d918c4fff8f53df894beaa8a07e8feab1bb"
-
-[[files]]
 path = "templates/shipped/memory/decisions.base"
 hash = "ee8a492f4d24926a265b55ac04536d34eef82dea7a71cfe61e7d44e06639b36c"
 
@@ -157,7 +177,7 @@ hash = "1027ce508ca38775b178fcc8d4b672e3dad7a625e9d0b6bf6ecf07bb6ad5ad7f"
 
 [[files]]
 path = "templates/shipped/memory/operating/vault-decisions.md"
-hash = "95046ce6730042c4e288332958fddc3b8486bae4ed469c2ccd06d8a2e460cb26"
+hash = "38b0313398c0f091365cd2a032986201c3f45cfa5aeb53fc1159e88d94e69e7b"
 
 [[files]]
 path = "templates/shipped/memory/operating/vault-operations.md"
@@ -288,40 +308,16 @@ path = "templates/shipped/templates/insight-note.md"
 hash = "234087f359c4d7c6f9a8bef25cbbebbea5ed39aa2eff879589a025406f5970b7"
 
 [[files]]
-path = "templates/shipped/templates/member-assurance.md"
-hash = "0df15d623f28e9fbe4e901a749ba969a220050c70d91185aa33d2504b0f0f74b"
-
-[[files]]
-path = "templates/shipped/templates/member-chief-of-staff.md"
-hash = "dc5b611733c2e0573626fb55e6adab75dcb63dd2911fe9e1a9c7a07dbb606b6f"
-
-[[files]]
-path = "templates/shipped/templates/member-communications.md"
-hash = "60282c6f1640094d30bd4658b4b977d92b6293fd7235f8acd2ceae6229881358"
-
-[[files]]
-path = "templates/shipped/templates/member-librarian.md"
-hash = "e28200d27986d81fb79ba0bc9c470f1cc3e8b48a32255ea67e99ea1d807e67e8"
-
-[[files]]
-path = "templates/shipped/templates/member-support.md"
-hash = "47ff40fbac7477ed72203622842393cc68916ff744a0b9d25f8a7223b4f223ff"
-
-[[files]]
-path = "templates/shipped/templates/member-technologist.md"
-hash = "7f513d69b58a60abcc347f641039d22bc2715c8fd78c16b021951380b009e5c8"
-
-[[files]]
 path = "templates/shipped/templates/raw-article.md"
 hash = "4435c018c21790f10c2a05e20a5cc04c6528a8f0b0d5e55ed20e62efb538940f"
 
 [[files]]
 path = "templates/shipped/templates/registry-agent-member.md"
-hash = "56d4d4a1e2a161f47fa177a8817286934dcfe6f8d2f85e27b562245cab93570b"
+hash = "f08a805ce04534b745960bd010dc05dd4d94445450e90d6061b00f476ed9d3e2"
 
 [[files]]
 path = "templates/shipped/templates/registry-agent-specialist.md"
-hash = "94f1fa3cee8eded70752109c2da90fd01c72b62309820af8dcc7bd905c3dd049"
+hash = "53d0773f32465b8ee51a3dacb9cd0eb5ea9de1d5a3c4e1a3fcc509984732fe1a"
 
 [[files]]
 path = "templates/shipped/templates/registry-event-kind.md"
@@ -377,15 +373,15 @@ hash = "ba9fc61e6acca88cc219d5c29ca83ebe18f14f2ef9d2796489e5a6cad22d5c50"
 
 [[files]]
 path = "update/tests/current.toml"
-hash = "de20c92d64e1d3c3fb68cb6bdf4d308ffcc74b021db98606b55925b1df2e5fc0"
+hash = "8479ef826d72b2619c8a2b4ca32fb3dc1869e1a810d1da49ea841c9339f6c47f"
 
 [[files]]
 path = "update/update.rhai"
-hash = "1c5c5ad4ac6d220c3f48c8caceae05ea4b3eb84c6ed50ea034dc8abc285691ac"
+hash = "1259b3ae22043b5a438b49f43215d14418833562d97a295b1bb740347e3ae312"
 
 [[files]]
 path = "update/workflow.toml"
-hash = "9a1b83ef18aaf05f7ea3336ebed4a9aa3f079128b4f6ce12c206ff91a42b31be"
+hash = "f90753f7d9146ef1b835b4204b9a49308e4164865207c7e66f6301b40f7c8b1d"
 
 [[files]]
 path = "workflows.toml"

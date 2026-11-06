@@ -281,18 +281,6 @@ response = { path = "memory/decisions.md", kind = "file", size = 1, created = "2
 server = "contextos"
 tool = "fs_get_file_info"
 kind = "valid"
-response = { path = "memory/decisions/vd-001-one-file-per-decision-or-question.md", kind = "file", size = 1, created = "2026-01-01 0:00:00 +00:00:00", modified = "2026-01-01 0:00:00 +00:00:00", accessed = "2026-01-01 0:00:00 +00:00:00", readonly = false, content_hash = "0000000000000000000000000000000000000000000000000000000000000000" }
-
-[[call]]
-server = "contextos"
-tool = "fs_get_file_info"
-kind = "valid"
-response = { path = "memory/decisions/vd-002-vault-decisions-and-questions-share-one-register.md", kind = "file", size = 1, created = "2026-01-01 0:00:00 +00:00:00", modified = "2026-01-01 0:00:00 +00:00:00", accessed = "2026-01-01 0:00:00 +00:00:00", readonly = false, content_hash = "0000000000000000000000000000000000000000000000000000000000000000" }
-
-[[call]]
-server = "contextos"
-tool = "fs_get_file_info"
-kind = "valid"
 response = { path = "memory/designs/markdown-extension.md", kind = "file", size = 1, created = "2026-01-01 0:00:00 +00:00:00", modified = "2026-01-01 0:00:00 +00:00:00", accessed = "2026-01-01 0:00:00 +00:00:00", readonly = false, content_hash = "0000000000000000000000000000000000000000000000000000000000000000" }
 
 [[call]]
@@ -600,42 +588,6 @@ server = "contextos"
 tool = "fs_get_file_info"
 kind = "valid"
 response = { path = "templates/insight-note.md", kind = "file", size = 1, created = "2026-01-01 0:00:00 +00:00:00", modified = "2026-01-01 0:00:00 +00:00:00", accessed = "2026-01-01 0:00:00 +00:00:00", readonly = false, content_hash = "0000000000000000000000000000000000000000000000000000000000000000" }
-
-[[call]]
-server = "contextos"
-tool = "fs_get_file_info"
-kind = "valid"
-response = { path = "templates/member-assurance.md", kind = "file", size = 1, created = "2026-01-01 0:00:00 +00:00:00", modified = "2026-01-01 0:00:00 +00:00:00", accessed = "2026-01-01 0:00:00 +00:00:00", readonly = false, content_hash = "0000000000000000000000000000000000000000000000000000000000000000" }
-
-[[call]]
-server = "contextos"
-tool = "fs_get_file_info"
-kind = "valid"
-response = { path = "templates/member-chief-of-staff.md", kind = "file", size = 1, created = "2026-01-01 0:00:00 +00:00:00", modified = "2026-01-01 0:00:00 +00:00:00", accessed = "2026-01-01 0:00:00 +00:00:00", readonly = false, content_hash = "0000000000000000000000000000000000000000000000000000000000000000" }
-
-[[call]]
-server = "contextos"
-tool = "fs_get_file_info"
-kind = "valid"
-response = { path = "templates/member-communications.md", kind = "file", size = 1, created = "2026-01-01 0:00:00 +00:00:00", modified = "2026-01-01 0:00:00 +00:00:00", accessed = "2026-01-01 0:00:00 +00:00:00", readonly = false, content_hash = "0000000000000000000000000000000000000000000000000000000000000000" }
-
-[[call]]
-server = "contextos"
-tool = "fs_get_file_info"
-kind = "valid"
-response = { path = "templates/member-librarian.md", kind = "file", size = 1, created = "2026-01-01 0:00:00 +00:00:00", modified = "2026-01-01 0:00:00 +00:00:00", accessed = "2026-01-01 0:00:00 +00:00:00", readonly = false, content_hash = "0000000000000000000000000000000000000000000000000000000000000000" }
-
-[[call]]
-server = "contextos"
-tool = "fs_get_file_info"
-kind = "valid"
-response = { path = "templates/member-support.md", kind = "file", size = 1, created = "2026-01-01 0:00:00 +00:00:00", modified = "2026-01-01 0:00:00 +00:00:00", accessed = "2026-01-01 0:00:00 +00:00:00", readonly = false, content_hash = "0000000000000000000000000000000000000000000000000000000000000000" }
-
-[[call]]
-server = "contextos"
-tool = "fs_get_file_info"
-kind = "valid"
-response = { path = "templates/member-technologist.md", kind = "file", size = 1, created = "2026-01-01 0:00:00 +00:00:00", modified = "2026-01-01 0:00:00 +00:00:00", accessed = "2026-01-01 0:00:00 +00:00:00", readonly = false, content_hash = "0000000000000000000000000000000000000000000000000000000000000000" }
 
 [[call]]
 server = "contextos"

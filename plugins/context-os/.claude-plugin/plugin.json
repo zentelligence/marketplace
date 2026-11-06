@@ -1,7 +1,7 @@
 {
     "name": "context-os",
     "displayName": "ContextOS",
-    "version": "1.19.58",
+    "version": "1.19.65",
     "description": "A structured personal knowledge vault. Human-accessible via Obsidian; AI-operated through the ContextOS MCP server from Claude Code and Codex.",
     "author": {
         "name": "Zentelligence",
