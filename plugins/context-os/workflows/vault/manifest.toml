@@ -4,8 +4,8 @@
 # `digest` is the SHA-256 over every other file in this folder (tests/test_vault_package.py checks it;
 # tools/package_digest.py writes it). `workflows.toml` lists the workflows and declares what they share.
 name = "contextos-vault"
-version = "0.1.8"
-digest = "sha256:506cca2bdc73983e27a5d59946f93ac64b3766c94a95d2b61cd01060c3b4e705"
+version = "1.0.0"
+digest = "sha256:d711902007e7a80553b5bf48301af20a3305399b4c4167c99048ea313784395d"
 
 [[files]]
 path = "health/health.rhai"
@@ -377,7 +377,7 @@ hash = "8479ef826d72b2619c8a2b4ca32fb3dc1869e1a810d1da49ea841c9339f6c47f"
 
 [[files]]
 path = "update/update.rhai"
-hash = "1259b3ae22043b5a438b49f43215d14418833562d97a295b1bb740347e3ae312"
+hash = "f1e594c258cd9266026478599f770d4271fb4f4df21bfe7a095b8b4374a28c19"
 
 [[files]]
 path = "update/workflow.toml"

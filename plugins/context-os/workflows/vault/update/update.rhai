@@ -21,7 +21,7 @@
 import "modules/helpers" as helpers;
 import "modules/layout" as layout;
 
-const PACKAGE_VERSION = "0.1.8";
+const PACKAGE_VERSION = "1.0.0";
 const PLUGIN = "context-os";
 const STATE_FILE = ".contextos/state.json";
 const ORIENTATION = "registry/instructions/global.md";
