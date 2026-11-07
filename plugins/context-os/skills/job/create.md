@@ -139,7 +139,7 @@ Leave `<vault>://registry/workflows/index.md` alone: the ContextOS MCP server ma
 
 Enabling a job is the operator's act. Give the operator, without running them:
 
-- The schedule command, with the cron expression confirmed in Step 2: `contextos-web jobs schedule <vault> <package> <workflow> <job> "<cron>"` (or `jobs schedule --shared <package> <workflow> <job> "<cron>"`), or the job's page at `/<vault>/workflows/<package>/<workflow>/jobs/<job>` (or `/shared/workflows/<package>/<workflow>/jobs/<job>`), which offers the same.
+- The schedule command, with the cron expression confirmed in Step 2: `contextos-web jobs schedule <vault> <package> <workflow> <job> "<cron>"` (or `jobs schedule --shared <package> <workflow> <job> "<cron>"`), or the job's page at `/<vault>/workflows/<package>/<workflow>/jobs/<job>` (or `/server/workflows/<package>/<workflow>/jobs/<job>`), which offers the same.
 - What enabling means: the job runs on that schedule in their local time, its first live run is on probation and a failure suspends it, a failed run is never retried, and any later change to the job's files makes a new version that ContextOS Web validates before it runs again.
 - That the job can also be run by hand from its page while `registered`, without a schedule.
 
