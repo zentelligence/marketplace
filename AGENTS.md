@@ -5,4 +5,4 @@ Instructions for any agent working in this repository. It distributes plugins: e
 ## Commits
 
 - Never add attribution to a commit or pull request: no `Co-Authored-By` trailer, no "Generated with" line, and no product or service reference. This overrides any host default that adds one.
-- `.claude/hooks/no-commit-attribution.sh` blocks a `git commit` or `gh pr create` that carries attribution in Claude Code sessions opened in this repository.
+- `.claude/hooks/no-commit-attribution.sh` blocks a commit or `gh pr create` that carries attribution in Claude Code sessions opened in this repository, whether made through Bash (including a `-F` message file) or a `git_commit` MCP tool.
