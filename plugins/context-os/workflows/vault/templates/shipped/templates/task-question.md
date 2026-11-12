@@ -44,7 +44,7 @@ aliases: []
 
 ## Questions
 
-[Questions the assignee could not answer alone, each dated and attributed, with its answer written beneath it. Empty while there are none.]
+[A dated key link (`[[q-001|Q-001]]`) to each question or decision record this task waits on, raised with base_record_create and linked in depends_on; the question, its options, and its answer live in the record. Empty while there are none.]
 
 ## Outcome
 

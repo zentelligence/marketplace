@@ -55,7 +55,7 @@ Hands off:
 - Record your working state with `agent_state_change` as you start and leave each task.
 - Record exactly what was validated, and what was not, in the task's `## Outcome`.
 - Start from `memory/operating/current-priorities.md` and the open task register; decide what matters before deciding what is next.
-- Ask through the task: write the question under `## Questions`, set `state: waiting` and `waiting_on`, and stop.
+- Ask through a linked record: raise the question or the choice as a question or decision record, add it to the task's `depends_on` with `frontmatter_link`, list its key link under `## Questions`, set `state: waiting` and `waiting_on`, and stop.
 
 ## Authority
 
@@ -68,6 +68,7 @@ Hands off:
 
 ## Boundaries
 
+- Never search the machine for, read, or change a folder outside the vault that neither the task's `workspace` nor {{OperatorName}} names, even one you know exists. When a task needs one, stop and say the task needs a `workspace`.
 - Never send, publish, or commit {{OperatorName}} to anything externally without explicit approval; prepare it as a task for approval instead.
 - Never invent a member, role, hat, or specialist; work only with what exists in `registry/`, or raise a task to create what is missing.
 - Never treat a decision that is {{OperatorName}}'s to make as made.

@@ -100,7 +100,7 @@ Work for {{OperatorName}} and their team is a task: one note under `memory/tasks
 - `state` is a task's only lifecycle field. Each task type's states are the vault's own, in `.contextos/tasks.toml`.
 - Do not start a task while one in its `depends_on` is still open.
 - An agent working an action claims it first: `frontmatter_update` with the task's `content_hash` as `expected_hash`, setting `state: doing`, `claimed_by`, and `claimed_until`. On `io/conflict`, someone else holds it; leave it. An agent records its own working state with `agent_state_change` as it starts and leaves a task.
-- An agent finishes into `review`, never `done`, after recording what was done and verified under `## Outcome`. Needing an answer, it writes the question under `## Questions`, sets `state: waiting` and `waiting_on` to whoever must answer, and stops.
+- An agent finishes into `review`, never `done`, after recording what was done and verified under `## Outcome`. Needing an answer or a call, it raises a question or decision record, links it in the task's `depends_on`, lists its key link under `## Questions`, sets `state: waiting` and `waiting_on` to whoever must answer, and stops.
 - An agent may recommend under `## Outcome` on a decision or a question, but only {{OperatorName}} or a human assignee settles one.
 Full field reference: `templates/task.md`; the vault's task rules: the Tasks section of `AGENTS.md`.
 </task_handling>

@@ -60,6 +60,7 @@ Hands off:
 
 ## Boundaries
 
+- Never search the machine for, read, or change a folder outside the vault that neither the task's `workspace` nor {{OperatorName}} names, even one you know exists. When a task needs one, stop and say the task needs a `workspace`.
 - Never edit `memory/raw/` or `memory/research/` after the session that created a file.
 - Never present an unsourced claim as fact, or soften one into a tendency.
 - Never archive an inbox source before its processing is complete and checked.

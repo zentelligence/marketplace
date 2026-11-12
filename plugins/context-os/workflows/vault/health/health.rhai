@@ -8,7 +8,9 @@
 // heading, an ## Open Questions section that holds only links to tasks (memory/tasks/) or vault decisions
 // (memory/decisions/), and the age checks: a wiki article not updated for `stale_days`, and an insight still proposed
 // `proposed_days` after it was created. Across the notes, from the server's link graph: every link that resolves to
-// no file or several, and every note with no links in or out.
+// no file or several, and every note with no links in or out. Across the vault: each record sidecar
+// (memory/tasks.md, memory/decisions.md, and memory/events.md) still holds every series and binding key the package
+// seeds.
 //
 // The report lists every finding, sorted by path, until it nears the 64 KiB an output may hold; `total_findings` and
 // `counts` always cover them all, and `truncated` says when the list stops short.
@@ -21,6 +23,20 @@ import "modules/helpers" as helpers;
 const MAX_SEARCH = 100000;
 const GRAPH_PAGE = 1000;
 const REPORT_BUDGET = 60000;
+
+// The names each record sidecar's binding keys hold as the package seeds them: a sidecar, a key, and its names.
+// tests/test_vault_package.py keeps these in step with templates/seeded/.
+const SIDECAR_KEYS = [
+    ["memory/decisions.md", "key_prefixes", ["VD", "VQ"]],
+    ["memory/decisions.md", "series_templates", ["VQ"]],
+    ["memory/events.md", "fixed_fields", ["type"]],
+    ["memory/events.md", "key_prefixes", ["S"]],
+    ["memory/events.md", "series_kinds", ["S"]],
+    ["memory/tasks.md", "fixed_fields", ["task_type"]],
+    ["memory/tasks.md", "key_prefixes", ["A", "D", "Q"]],
+    ["memory/tasks.md", "link_fields", ["blocks", "depends_on", "parent", "related"]],
+    ["memory/tasks.md", "series_templates", ["D", "Q"]],
+];
 
 // `value` as a whole number, whichever numeric form the input arrived in.
 fn as_int(value) {
@@ -280,6 +296,38 @@ if notes.len() > 0 {
         if (p.starts_with("memory/wiki/") || p.starts_with("memory/insights/")) && !p.ends_with("/index.md") {
             findings.push(finding("orphan", p, "no links in or out"));
         }
+    }
+}
+
+// --- record sidecars -----------------------------------------------------------------------------------------------
+// A sidecar is seeded once and never refreshed, so a vault scaffolded before the package added a series or a binding
+// key keeps the old one, and the skills that rely on it fail: a D or Q series to raise, or task_type stamped on every
+// task. Only the names under each key are checked, never their values, which are the vault's own; a sidecar the vault
+// does not have is update's to add.
+let sidecars = #{};
+for entry in SIDECAR_KEYS {
+    let path = entry[0];
+    if !(path in sidecars) {
+        let fm = ();
+        try {
+            fm = call_mcp("contextos", "frontmatter_read", #{ path: vault + "://" + path }).frontmatter;
+        } catch (err) {
+            if !helpers::is_not_found(err) { findings.push(finding("frontmatter-unreadable", path, err.to_string())); }
+        }
+        sidecars[path] = fm;
+    }
+    let fm = sidecars[path];
+    if fm == () { continue; }
+    let held = if entry[1] in fm { fm[entry[1]] } else { () };
+    let missing = "";
+    for name in entry[2] {
+        let has = if type_of(held) == "map" { name in held } else if type_of(held) == "array" { held.contains(name) }
+            else { false };
+        if !has { missing += (if missing == "" { "" } else { ", " }) + name; }
+    }
+    if missing != "" {
+        findings.push(finding("sidecar-incomplete", path, entry[1] + " lacks " + missing
+            + ", which the package seeds; /vault update never refreshes a sidecar"));
     }
 }
 

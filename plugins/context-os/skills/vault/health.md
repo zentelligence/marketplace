@@ -7,7 +7,7 @@
 Check the vault's health and the quality of its knowledge, and put the fixes in hand. Two sources, one report:
 
 - **Vault health**, from the ContextOS MCP server's `doctor`: configuration, managed indexes, Git, the search stores, frontmatter that does not parse, duplicate ids, records that do not match their base, link integrity, the team, event kinds, and projection into the agent hosts.
-- **Knowledge quality**, from the vault package's `health` workflow, run as a saved shared job: what `memory/operating/vault-conduct.md` asks of wiki articles and insight notes (lowercase-hyphenated names, frontmatter, sources in the frontmatter, allowed `status` and `confidence` values, no unfilled placeholders or empty headings, open questions held as links to tasks or vault decisions, and staleness), plus every link that does not resolve and every note with no links in or out, from the server's link graph.
+- **Knowledge quality**, from the vault package's `health` workflow, run as a saved shared job: what `memory/operating/vault-conduct.md` asks of wiki articles and insight notes (lowercase-hyphenated names, frontmatter, sources in the frontmatter, allowed `status` and `confidence` values, no unfilled placeholders or empty headings, open questions held as links to tasks or vault decisions, and staleness), plus every link that does not resolve and every note with no links in or out, from the server's link graph, and any record sidecar (`memory/tasks.md`, `memory/decisions.md`, or `memory/events.md`) missing a series or binding key the package seeds.
 
 It runs unattended, usually on a schedule, so it never stops to ask the operator. The checks write nothing. What can be fixed is fixed in the same run: `doctor_resolve` repairs what the server can, and the vault's librarian, the member whose domain is knowledge, started as a sub-agent, resolves the knowledge findings and the knowledge-related `doctor` findings, confirming each against `doctor` and the `health` job. Whatever needs a decision goes up the team, never straight to the operator: the librarian escalates to the chief of staff, who settles it or takes it to the operator.
 
@@ -66,7 +66,8 @@ Assemble two sections, each grouped and counted.
 4. **Links:** `link-unresolved` and `links-unreadable`.
 5. **Open questions:** `open-question-unlinked`, an item under `## Open Questions` that is not a link to a question or decision task, or to a vault decision or question.
 6. **Staleness:** `stale` (a wiki article not updated in 90 or more days) and `proposed-stale` (an insight proposed 30 or more days ago).
-7. **Summary:** wiki articles and insight notes checked, and the findings in total.
+7. **Record sidecars:** `sidecar-incomplete`, a sidecar lacking a series under `key_prefixes`, or a name under `fixed_fields`, `series_templates`, `link_fields`, or `series_kinds`, that the package seeds. A sidecar is seeded once and `/vault update` never refreshes it, so an older vault keeps what it was scaffolded with. It is the vault's design, which only the operator changes: never hand it to the librarian, and escalate each in Step 6 with the missing names and the package's seeded sidecar as the reference.
+8. **Summary:** wiki articles and insight notes checked, and the findings in total.
 
 ### Step 4: vault repairs
 
@@ -81,7 +82,7 @@ Never repair a `doctor` finding by hand outside the librarian's bounds, and neve
 
 Find the librarian: the agent member of `.contextos/team.toml` whose `registry/agents/<slug>.md` has `function: librarian`. If the vault has none, or the host has no agent by that slug (its definition did not project; `doctor` says why), make no knowledge fixes: escalate one finding saying the librarian could not be started and why, with the knowledge findings listed in it, and go to Step 6.
 
-1. Group the findings into pieces of work: for example, one note needing its frontmatter and sources, a batch of broken links, a batch of open questions to raise as tasks, a batch of stale articles to review, or one stale proposed insight.
+1. Group the findings, other than `sidecar-incomplete`, into pieces of work: for example, one note needing its frontmatter and sources, a batch of broken links, a batch of open questions to raise as tasks, a batch of stale articles to review, or one stale proposed insight.
 2. Start the librarian as a sub-agent now, using the host's own agent named by the librarian's slug; one sub-agent for the batch, or one per independent piece of work, started in the same turn so they run together. Never substitute a general-purpose agent. Brief it with:
 
    > You are resolving findings from an unattended `/vault health` run in the `<vault>` vault; nobody is waiting to answer questions. Load the `mcp-tools` skill if it is not already loaded, then call `agent_state_change` with your slug, `state: working`, and `reason: vault health`. Read the vault's `AGENTS.md` and `memory/operating/vault-conduct.md` through ContextOS MCP, and work through exactly these findings, within your definition's Remit, Authority, and Boundaries: `<findings, each with its check, note path, and detail, and each doctor finding with its kind and message>`.

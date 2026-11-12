@@ -5,6 +5,7 @@ task_type: action
 state: next
 entity: "{{entity}}"
 assignee: "{{team member slug}}"
+workspace:
 priority: normal
 created: <% tp.date.now("YYYY-MM-DD") %>
 updated: <% tp.date.now("YYYY-MM-DD") %>
@@ -45,7 +46,7 @@ aliases: []
 
 ## Questions
 
-[Questions the assignee could not answer alone, each dated and attributed, with its answer written beneath it. Empty while there are none.]
+[A dated key link (`[[q-001|Q-001]]`) to each question or decision record this task waits on, raised with base_record_create and linked in depends_on; the question, its options, and its answer live in the record. Empty while there are none.]
 
 ## Outcome
 
@@ -77,10 +78,14 @@ A task is blocked when a task in `depends_on` is still open. That is worked out,
 a state, and a blocked task is not started. A team member who cannot work at all records that in
 their own working state, not in a task.
 
-`assignee` is a team member's slug, never a display name. `entity` is one of the vault's
+`workspace` is set only on an action that must work outside the vault: a Git repository's remote URL, or a
+folder's path (from home as `~/...`, or absolute). /dispatch works such a task only from a session whose working
+folder holds that clone or folder, never from a member's workspace; a task without one is vault-only. Prefer the
+remote URL, since a path names a folder on one machine only. `assignee` is a team member's slug, never a display name. `entity` is one of the vault's
 entities. `waiting_on` names a team member's slug, or an external party in plain words. An agent
-that needs an answer writes it under Questions, sets `state: waiting` and `waiting_on` to who must
-answer; the answerer writes the answer and moves the task back to next.
+that needs an answer or a call raises a question (`Q`) or decision (`D`) record, links it in `depends_on`,
+lists its key link under Questions, and sets `state: waiting` and `waiting_on` to who must answer; whoever
+closes the record moves the task back to next.
 
 `claimed_by` (`<slug>/<run-id>`) and `claimed_until` (ISO 8601 UTC) are set by an agent session
 when it starts the task and cleared when the task leaves doing. `attempts` counts those claims: a

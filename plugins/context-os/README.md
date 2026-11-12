@@ -68,7 +68,7 @@ Registry operations run inline in any prompt:
 | `/hat create <slug>` | Define a new operator hat in `registry/hats/`. |
 | `<slug>:agent` | Delegate the task to an operator agent, run as a sub-agent. |
 | `/agent create <slug>` | Define a new operator agent in `registry/agents/`. |
-| `/dispatch [<slug>]` | Work the task list: claim each actionable task assigned to an agent member and start that member's sub-agent on it, three at a time, until none remain. Built to run as a scheduled task from the member's workspace, `.contextos/workspaces/<slug>/`. |
+| `/dispatch [<slug>]` | Work the task list: claim each actionable task assigned to an agent member and start that member's sub-agent on it, three at a time, until none remain. Built to run as a scheduled task from the member's workspace, `.contextos/workspaces/<slug>/`, or, for tasks whose `workspace` names a repository, from that repository's clone. |
 
 Every vault ships with a generic V-sequence build set: the roles strategist, analyst, architect, engineer, and auditor, and the hats definer, planner, solver, critic, refiner, and synthesiser. Edit them freely; `/vault update` restores any that are missing.
 

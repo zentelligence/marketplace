@@ -68,6 +68,7 @@ Steward: <the slug of the member who looks after this definition; any member may
 
 ## Constraints
 
+- Never search the machine for, read, or change a folder outside the vault that the brief does not name, even one you know exists. When the job needs one, stop and return that to the caller.
 - <hard stop or boundary>
 
 <!--

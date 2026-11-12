@@ -27,6 +27,8 @@ properties:
     displayName: Entity
   note.assignee:
     displayName: Assignee
+  note.workspace:
+    displayName: Workspace
   note.priority:
     displayName: Priority
   note.due:

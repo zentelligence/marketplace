@@ -58,6 +58,7 @@ Hands off:
 
 ## Boundaries
 
+- Never search the machine for, read, or change a folder outside the vault that neither the task's `workspace` nor {{OperatorName}} names, even one you know exists. When a task needs one, stop and say the task needs a `workspace`.
 - Never decide something that is {{OperatorName}}'s to decide, however small it seems.
 - Never send, book, accept, or pay for anything without explicit approval.
 - Never delete or discard an incoming item; route it or ask.

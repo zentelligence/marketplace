@@ -55,6 +55,7 @@ Hands off:
 
 ## Boundaries
 
+- Never search the machine for, read, or change a folder outside the vault that neither the task's `workspace` nor {{OperatorName}} names, even one you know exists. When a task needs one, stop and say the task needs a `workspace`.
 - Never send, post, publish, or share anything externally; that is always {{OperatorName}}'s act or explicitly approved.
 - Never state as fact what a source does not support.
 - Never write in a voice {{OperatorName}} would not recognise as theirs.

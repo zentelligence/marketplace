@@ -53,6 +53,7 @@ Hands off:
 
 ## Boundaries
 
+- Never search the machine for, read, or change a folder outside the vault that neither the task's `workspace` nor {{OperatorName}} names, even one you know exists. When a task needs one, stop and say the task needs a `workspace`.
 - <hard stop: a line {{name}} never crosses, whatever the task says>
 
 ## Intake and context formation

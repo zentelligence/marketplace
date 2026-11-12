@@ -20,7 +20,7 @@ It is built to run unattended as a scheduled task (see [Running on a schedule](#
 
 Follow steps 1, 2, and 4 of the vault router's [Before any command](../vault/SKILL.md#before-any-command) section, and step 3 for `AGENTS.md` and `vault-conduct.md`. When several vaults are configured, none was named, and no one is present to answer, report that and stop rather than choosing one. If the server is unavailable, report it and stop; never fall back to the host's own file tools. The [mcp-tools](../mcp-tools/SKILL.md) skill's notes guide covers `base_query`, claiming a record, and recording an event.
 
-The session's working folder may be a member's workspace, `.contextos/workspaces/<slug>/` (see below). It is not vault content and changes nothing here: read and write the vault only through ContextOS MCP.
+The session's working folder may be a member's workspace, `.contextos/workspaces/<slug>/`, or a Git repository that tasks name as their `workspace` (see below). It is not vault content: read and write the vault only through ContextOS MCP. It decides only which tasks with a `workspace` this run may work.
 
 ---
 
@@ -30,6 +30,7 @@ The session's working folder may be a member's workspace, `.contextos/workspaces
 | --- | --- | --- |
 | Member slug | `/dispatch <slug>` | Every agent member |
 | Concurrency limit | `limit <n>` in the invocation | 3 |
+| Working folder | The session's own | Decides which tasks with a `workspace` this run covers |
 | `.contextos/team.toml` | Vault | Required |
 | `memory/tasks.base` and `memory/tasks/` | Vault | Required |
 | `memory/events.base` and `registry/events/session.run-*.md` | Vault, shipped by the scaffold | Required: the run id comes from them |
@@ -56,15 +57,25 @@ The session's working folder may be a member's workspace, `.contextos/workspaces
    - is in this run's handled list;
    - has a `start_after` later than today;
    - holds a `claimed_until` still in the future;
+   - names a `workspace` this session does not cover (see [Workspaces](#workspaces));
    - is blocked: a task in its `depends_on` is still open. Look the dependencies up with `base_query` `ids`. A state is closed when its stage in `.contextos/tasks.toml`, under the dependency's own `task_type` or else the shared `[[stage]]` list, sets `closes` to `completed` or `cancelled`; every other state is open. Without that file, `done`, `adopted`, `answered`, and `dropped` are closed.
 3. Order what remains by `priority`, most urgent first in the order of `.contextos/tasks.toml`'s `[[priority]]` list (without it, `high`, then `normal`, then `low`), then by the earliest of `finish_by` and `due` (none last), then by id.
 4. If nothing remains, go to Step 5.
 
-Decisions and questions are not dispatched: an agent records its recommendation or answer and leaves them open for a person, so they would be dispatched again on every run.
+Decisions and questions are not dispatched: an agent records its recommendation or answer and leaves them open for a person, so they would be dispatched again on every run. A worker that needs an answer or a call raises one of these records and links it in its task's `depends_on`, so the task stays blocked under the check above until a person closes the record and moves the task back to `next`.
+
+#### Workspaces
+
+A task without a `workspace` is vault-only, and any run may work it. A task with one must work outside the vault, and only a session that covers its `workspace` may work it:
+
+- **A path** (starting with `~`, `/`, or a drive letter, with `~` read as this session's home folder): covered when the session's working folder is that folder or a folder above it, and the folder exists.
+- **A Git remote URL**: covered when the session's working folder, or a folder below it, is a clone whose remote is that URL. Compare without a trailing `.git` or `/`, and treat the SSH and HTTPS forms of one host and path as the same.
+
+A member's workspace, `.contextos/workspaces/<slug>/`, covers nothing. Note the folder that covers each task, its clone or its path in this session, because the brief names it. Report a path under the working folder that does not exist as a skipped task under Step 5.
 
 ### Step 3: claim
 
-Take tasks from the top of the order until this round holds the concurrency limit, with at most one task per worker: a member works its tasks one after another, never two at once, so a task whose worker already has one this round waits for a later round. For each:
+Take tasks from the top of the order until this round holds the concurrency limit, with at most one task per worker and one per covered folder: a member works its tasks one after another, never two at once, and two sub-agents in one working tree would change each other's files, so a task whose worker or folder already has one this round waits for a later round. A worker is also busy when another run holds an unexpired claim for it: query `memory/tasks.base` for tasks with `state` `doing` whose `claimed_by` contains `<worker>/`, and if one starts with `<worker>/`, belongs to another run, and has a `claimed_until` still in the future, its task waits too. For each:
 
 1. Fetch it with `base_query` `ids` and confirm it is still actionable as in Step 2.
 2. Choose its worker from `attempts` (empty counts as 0), counting this claim as one more:
@@ -83,16 +94,20 @@ Take tasks from the top of the order until this round holds the concurrency limi
 2. If the host has no agent by the worker's slug, its definition did not project. Do not substitute a general-purpose agent. Release the claim with `frontmatter_update` (`state: next`, `claimed_by` and `claimed_until` empty, `attempts` back to its count before this claim) and report the member under Step 5 as needing `doctor` to explain why it is not projected.
 3. Give each sub-agent this brief, filled in:
 
-   > You are working task `<id>` in the `<vault>` vault, `<vault>://<task path>`, which this run has claimed for you as `<claimed_by>` until `<claimed_until>`. Load the `mcp-tools` skill if it is not already loaded. Before anything else, call `agent_state_change` with your slug, `state: working`, and the task id as `reason`. Read the task, the vault's `AGENTS.md`, and `memory/operating/vault-conduct.md` through ContextOS MCP, and do the work its Context, Tasks, and Verify sections describe, within your definition's Remit, Authority, and Boundaries. Read and write the vault only through ContextOS MCP. Your working folder is not the vault: never cite or link anything in it, and if a file you need to keep ends up there, file it into the vault with `note_create` and `content_from` rather than retyping it. Finish in exactly one of these ways, each time setting `updated` to today and clearing `claimed_by` and `claimed_until`:
+   > You are working task `<id>` in the `<vault>` vault, `<vault>://<task path>`, which this run has claimed for you as `<claimed_by>` until `<claimed_until>`. Load the `mcp-tools` skill if it is not already loaded. Before anything else, call `agent_state_change` with your slug, `state: working`, and the task id as `reason`. Read the task, the vault's `AGENTS.md`, and `memory/operating/vault-conduct.md` through ContextOS MCP, and do the work its Context, Tasks, and Verify sections describe, within your definition's Remit, Authority, and Boundaries. Read and write the vault only through ContextOS MCP. Your working folder is not the vault: never cite or link anything in it, and if a file you need to keep ends up there, file it into the vault with `note_create` and `content_from` rather than retyping it. Beyond ContextOS MCP and the `contextos-web` command line, touch only the folder this task's `workspace` names, or your working folder when it names none: never search the machine for a repository or folder, and never read or change one beyond that, even one you know exists. If the task needs one its `workspace` does not name, finish as **Cannot proceed** and say the task needs a `workspace`. Finish in exactly one of these ways, each time setting `updated` to today and clearing `claimed_by` and `claimed_until`:
    > - **Finished:** record what was done, links to every note written, and what was and was not verified under `## Outcome`, then set `state: review`. Never set `done` yourself.
-   > - **Need an answer:** add your dated question under `## Questions`, then set `state: waiting` and `waiting_on` to the slug of who must answer.
-   > - **Cannot proceed:** explain why under `## Outcome`, then set `state: waiting` and `waiting_on` to the operator's slug.
+   > - **Need an answer or a call:** raise each question only a person can answer as a question record, and each choice only a person can make as a decision record, never as text in this task. Call `base_record_create` on `<vault>://memory/tasks.base` with `prefix: Q` for a question or `prefix: D` for a decision (the series fixes `task_type` and `type`, so omit both), a `title` that states the question or the choice, this task's `entity`, `assignee` set to the slug of who must answer, and `state` set to the type's initial state in `.contextos/tasks.toml` (`open` for a question and `proposed` for a decision by default), which the server does not stamp. In the record, put what is being asked and the options under `## Context`, and your recommendation under `## Outcome`. Leave it in that state: only a person answers, adopts, or drops it. Link it with one `frontmatter_link` call on this task, adding each record's key to `depends_on`, which writes the reciprocal `blocks` on the record and keeps this task blocked until the record closes. Under this task's `## Questions`, list each record by its key link (`[[q-001|Q-001]]`) with today's date, and nothing more. Then set `state: waiting` and `waiting_on` to the slug of who must answer.
+   > - **Cannot proceed:** when the blocker is neither a question nor a choice, such as missing access, a failing tool, a repository or folder the task's `workspace` does not name, or work outside your Authority, explain why under `## Outcome`, then set `state: waiting` and `waiting_on` to the operator's slug. If unblocking it needs the operator to decide something, raise that as a decision record and link it as above.
    >
    > Once the task is left, call `agent_state_change` again: `idle` if you left it in `review`, or `awaiting-input` if you left it `waiting`. If the claim would lapse before you finish, extend `claimed_until` with `frontmatter_update` and the task's current `content_hash`. Reply with one line: the task id, the state you left it in, and the notes you wrote.
 
    For an escalation, add to the brief:
 
-   > This task has had two attempts by `<assignee>` without finishing; its `## Outcome` and `## Questions` say what happened. As chief of staff, do not hand it back to `<assignee>` or pass it to another member. Either finish it yourself into `review`; or split it into smaller tasks with `base_record_create`, each with `parent` set to this task, record the split under `## Outcome`, and set this task to `review`; or, if only the operator can unblock it, leave it `waiting` on the operator.
+   > This task has had two attempts by `<assignee>` without finishing; its `## Outcome`, and the question and decision records its `depends_on` links, say what happened. As chief of staff, do not hand it back to `<assignee>` or pass it to another member. Either finish it yourself into `review`; or split it into smaller tasks with `base_record_create`, each with `parent` set to this task, record the split under `## Outcome`, and set this task to `review`; or, if only the operator can unblock it, leave it `waiting` on the operator.
+
+   For a task with a `workspace`, add to the brief:
+
+   > This task works outside the vault, in `<covered folder>`, and nowhere else outside the vault. Follow that repository's or system's own conventions, which win over any default here. In a Git repository, work on this task's own branch, named by the repository's convention or else `task/<id>`, and commit there; record the branch and its commits under `## Outcome`. Push nothing, never merge into a shared branch such as `dev` or `main`, and never run a release, publish, or deploy step: those are the operator's.
 
 4. When the sub-agents return, fetch each task with `base_query` `ids`. If one is still `doing` under this run's claim, the sub-agent stopped without finishing: add a dated note under `## Outcome` saying the run ended without a result, set `state: waiting` with `waiting_on` set to the operator's slug, and clear the claim. Never mark a task finished on the sub-agent's word alone. Then read `.contextos/team.toml` again: a worker from this round still in state `working` stopped without updating it, so call `agent_state_change` for it with `idle` and the reason `run <run id> ended its task`.
 5. Return to Step 2. Stop after ten rounds even if tasks remain, and say so in the report; the next scheduled run carries on.
@@ -125,6 +140,14 @@ When the operator asks to schedule dispatching, tell them to set it up in their 
 3. Set the local folder to `<vault folder>/.contextos/workspaces/<slug>/`, using the chief of staff's workspace for the whole team. On macOS, press Cmd+Shift+. in the folder picker to show the `.contextos` folder.
 4. Choose a schedule, and click **Run now** once. Answer each permission prompt with "always allow", including the `mcp__contextos__*` tools, so later runs do not stall waiting for approval.
 
+### Repositories
+
+A task with a `workspace` needs its own schedule, since a member's workspace covers nothing. Schedule one per repository, as above, with the repository's clone as the local folder and the instructions `/dispatch <slug>` for the member who works it, usually the technologist. Working from the repository itself loads its own instructions, settings, hooks, and skills, and keeps the permissions granted to it limited to that repository. A run there also works the member's vault-only tasks; claims keep it from clashing with the member's own schedule.
+
+Set each such task's `workspace` to the repository's Git remote URL where it has one. A path names a folder on one machine only, and the vault's host and the scheduled session may see the same repository under different paths.
+
+A folder above several repositories also works as one schedule, but it loads none of their own settings, and its permissions reach all of them.
+
 A run catches up once after the computer sleeps through a scheduled time, so it may start hours late. That is safe: what is actionable comes from the tasks' own state, never the clock time of the run.
 
 ---
@@ -132,7 +155,8 @@ A run catches up once after the computer sleeps through a scheduled time, so it 
 ## Invariants
 
 - The dispatcher never works a task; only the worker's own agent does: the assignee, or the chief of staff on an escalation.
-- A member works one task at a time, and every agent records its own working state with `agent_state_change`.
+- A member works one task at a time, across runs as well as within one, and every agent records its own working state with `agent_state_change`.
+- A task with a `workspace` is worked only from a session that covers it, one task per covered folder at a time, on its own branch, and never pushed, merged into a shared branch, or released by the worker.
 - Every claim adds one to `attempts`; the third goes to the chief of staff and a fourth to the operator.
 - The run id is the `key` the server returned for `session.run-started`, never the clock. Nothing is claimed or worked without one.
 - Every task is claimed with a conflict-checked write before its sub-agent starts, and a refused claim is never retried by another route.

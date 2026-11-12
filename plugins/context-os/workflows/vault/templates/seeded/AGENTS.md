@@ -120,7 +120,7 @@ Work the operator and the team are doing lives in `memory/tasks/`, one note per 
 - `state` is the only lifecycle field, and each type has its own: an action is `backlog`, `next`, `doing`, `waiting`, `review`, `done`, or `dropped`; a decision `proposed`, `adopted`, or `dropped`; a question `open`, `answered`, or `dropped`. That is the starting set; `.contextos/tasks.toml` holds this vault's own, which may differ. There is no `status`.
 - `assignee` is a team member's slug. An agent finishes its work into `review`; a person moves it to `done`.
 - A task is blocked while any task in its `depends_on` is open. Do not start it.
-- Stuck on something only the operator can answer? Write the question under `## Questions`, set `state: waiting` and `waiting_on` to the operator's slug, and stop.
+- Stuck on something only the operator can answer or decide? Raise it as a question (`Q-`) or decision (`D-`) record, add it to the task's `depends_on` with `frontmatter_link`, list its key link under `## Questions`, set `state: waiting` and `waiting_on` to the operator's slug, and stop.
 - Record what you did under `## Outcome` before moving a task to `review` or `done`.
 - You may research a decision or a question and write your recommendation or answer under `## Outcome`, leaving it open. Only the operator or a human assignee adopts, answers, or drops it.
 - A decision or question about the operator's own work is a task (`task_type: decision` or `question`). Only decisions and questions about the vault itself, its design and operation, go in `memory/decisions/` (see `memory/operating/vault-decisions.md`).
